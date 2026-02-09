@@ -8,5 +8,5 @@ export interface BagItem extends Identifiable {
   sproutCost?: number;
   qty?: number;
   happiness?: number;
-  effects: string[]; // change
+  effects: string[]; // need to derive from obj array
 }
