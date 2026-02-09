@@ -4,7 +4,7 @@ import type { JournalTag } from "../interfaces/JournalTag.js";
 
 const schema = new mongoose.Schema<JournalTag>({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     required: true,
   },
   label: {

@@ -4,7 +4,7 @@ import type { JournalEntry } from "../interfaces/JournalEntry.js";
 
 const schema = new mongoose.Schema<JournalEntry>({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     required: true,
   },
   date: {

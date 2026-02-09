@@ -4,7 +4,7 @@ import type { GoalEntry } from "../interfaces/GoalEntry.js";
 
 const schema = new mongoose.Schema<GoalEntry>({
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Types.ObjectId,
     required: true,
   },
   date: {
