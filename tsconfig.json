@@ -9,7 +9,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     // "types": [],
     // For nodejs:
     "lib": ["esnext", "dom"],

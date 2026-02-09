@@ -6,6 +6,8 @@ import compression from 'compression';
 // Security middleware
 import helmet from 'helmet';
 import cors from 'cors';
+import { HealthRouter } from './routes/HealthRouter.js';
+
 
 const app = express();
 app.use(express.json());
@@ -18,6 +20,8 @@ app.use(
 );
 app.use(helmet());
 app.use(compression());
+
+app.use('/health', HealthRouter);
 
 const server = app.listen(Number(process.env.SERVER_PORT), String(process.env.SERVER_IP), () => {
   mongoose.set('strictQuery', false);
