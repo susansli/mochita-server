@@ -84,6 +84,7 @@ async function deleteAllUserData(id: string) {
     }
 
     await UserSchema.findByIdAndDelete(userId);
+    return true;
   } catch (e) {
     console.error(e);
     return false;
