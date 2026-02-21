@@ -7,7 +7,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import cors from 'cors';
 import { HealthRouter } from './routes/HealthRouter.js';
-
+import { UserRouter } from './routes/UserRouter.js';
 
 const app = express();
 app.use(express.json());
@@ -22,6 +22,7 @@ app.use(helmet());
 app.use(compression());
 
 app.use('/health', HealthRouter);
+app.use('/user', UserRouter);
 
 const server = app.listen(Number(process.env.SERVER_PORT), String(process.env.SERVER_IP), () => {
   mongoose.set('strictQuery', false);
