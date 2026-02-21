@@ -3,6 +3,10 @@ import type { BagItem } from "../interfaces/BagItem.js";
 import { stripAndFormatIds } from "../../utils/stripAndFormatIds.js";
 
 const schema = new mongoose.Schema<BagItem>({
+  userId: {
+    type: mongoose.Types.ObjectId,
+    required: true,
+  },
   name: {
     type: String,
     required: true,
