@@ -8,5 +8,5 @@ export interface BagItem extends Identifiable {
   type: ItemType;
   sproutCost?: number;
   happiness?: number;
-  effects: string[]; // need to derive from obj array, NOT in schema
+  effects?: string[]; // need to derive from obj array, NOT in schema
 }
