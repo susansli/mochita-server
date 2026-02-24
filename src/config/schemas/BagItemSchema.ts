@@ -23,6 +23,6 @@ const schema = new mongoose.Schema<BagItem>({
   },
 });
 
-schema.plugin(stripAndFormatIds);
+schema.plugin(stripAndFormatIds); 
 
 export const BagItemSchema = mongoose.model<BagItem>("BagItem", schema);
