@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { HealthRouter } from './routes/HealthRouter.js';
 import { UserRouter } from './routes/UserRouter.js';
+import { InventoryRouter } from './routes/InventoryRouter.js';
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use(compression());
 
 app.use('/health', HealthRouter);
 app.use('/user', UserRouter);
+app.use('/inventory', InventoryRouter);
 
 const server = app.listen(Number(process.env.SERVER_PORT), String(process.env.SERVER_IP), () => {
   mongoose.set('strictQuery', false);
