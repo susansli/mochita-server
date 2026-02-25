@@ -54,8 +54,8 @@ async function updateUser(req: Request, res: Response) {
 
 async function getUser(req: Request, res: Response) {
   const { id } = req.body;
-  const isErr = assertString(id);
-  if (isErr) {
+
+  if (!assertString(id)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
       errMsg: "There was a problem with the id parameter.",
     });
@@ -73,8 +73,8 @@ async function getUser(req: Request, res: Response) {
 
 async function deleteAllUserData(req: Request, res: Response) {
   const { id } = req.body;
-  const isErr = assertString(id);
-  if (isErr) {
+
+  if (!assertString(id)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
       errMsg: "There was a problem with the id parameter.",
     });
