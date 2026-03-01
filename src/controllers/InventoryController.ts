@@ -129,6 +129,48 @@ async function getUserInventory(req: Request, res: Response) {
   }
 }
 
+async function buyItem(req: Request, res: Response) {
+  const { itemId, userId, qty } = req.body;
+
+  if (!assertString(itemId) || !assertString(userId) || !assertNumber(qty)) {
+    res.status(ResponseCodes.CLIENT_ERROR).send({
+      errMsg: "There was a problem with the itemId, userId, or qty parameters.",
+    });
+  } else {
+    const response = await InventoryModel.buyItem(itemId, userId, qty);
+    if (response) {
+      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+    } else if (response === false) {
+      res.status(ResponseCodes.CLIENT_ERROR).send({
+        errorMsg: "The user cannot afford this transaction.",
+      });
+    } else {
+      res.status(ResponseCodes.API_ERROR).send({
+        errorMsg: "There was a problem buying the item.",
+      });
+    }
+  }
+}
+
+async function useTreat(req: Request, res: Response) {
+  const { itemId, userId, qty } = req.body;
+
+  if (!assertString(itemId) || !assertString(userId) || !assertNumber(qty)) {
+    res.status(ResponseCodes.CLIENT_ERROR).send({
+      errMsg: "There was a problem with the itemId, userId, or qty parameters.",
+    });
+  } else {
+    const response = await InventoryModel.useTreat(itemId, userId, qty);
+    if (response) {
+      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+    } else {
+      res.status(ResponseCodes.API_ERROR).send({
+        errorMsg: "There was a problem using the treat.",
+      });
+    }
+  }
+}
+
 export const InventoryController = {
     addBagItemOwnership,
     updateBagItemOwnership,
@@ -136,5 +178,7 @@ export const InventoryController = {
     unequipBagItem,
     getAllStoreItems,
     getUserEquippedItems,
-    getUserInventory
+    getUserInventory,
+    buyItem,
+    useTreat
 };

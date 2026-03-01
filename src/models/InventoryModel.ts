@@ -7,6 +7,7 @@ import { deleteItemFromEquippedSlot } from "../utils/deleteItemFromEquippedSlot.
 import { InventoryItem } from "../config/interfaces/InventoryItem.js";
 import { BagItemOwnership } from "../config/interfaces/BagItemOwnership.js";
 import { EquippedItems } from "../config/interfaces/EquippedItems.js";
+import { UserSchema } from "../config/schemas/UserSchema.js";
 
 async function addBagItemOwnership(
   itemName: string,
@@ -67,15 +68,92 @@ async function updateBagItemOwnership(
         userId: userObjId,
       },
       {
-        $set: { qty: qty }
+        $set: { qty: qty },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!bagItemOwnership) {
       return null;
     }
     return bagItemOwnership;
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+}
+
+async function buyItem(itemId: string, userId: string, qty: number) {
+  try {
+    const userObjId = new mongoose.Types.ObjectId(userId);
+
+    const userSchema = await UserSchema.findById(userObjId);
+
+    if (!userSchema) {
+      return null;
+    }
+
+    const itemObjId = new mongoose.Types.ObjectId(itemId);
+
+    const bagItem = await BagItemSchema.findById(itemObjId);
+
+    if (!bagItem) {
+      return null;
+    }
+
+    if (bagItem?.sproutCost && userSchema.sprouts > bagItem.sproutCost * qty) {
+      const updatedUserSchema = await UserSchema.findByIdAndUpdate(
+        userSchema._id,
+        {
+          sprouts: userSchema.sprouts - bagItem.sproutCost * qty,
+        },
+      );
+
+      if (!updatedUserSchema) {
+        return null;
+      }
+
+      return await addBagItemOwnership(itemId, userId, qty);
+    }
+
+    return false; // means the user can't afford the transaction - null is an error
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+}
+
+async function useTreat(itemId: string, userId: string, qty: number) {
+  try {
+    const userObjId = new mongoose.Types.ObjectId(userId);
+
+    const userSchema = await UserSchema.findById(userObjId);
+
+    if (!userSchema) {
+      return null;
+    }
+
+    const itemObjId = new mongoose.Types.ObjectId(itemId);
+
+    const bagItem = await BagItemSchema.findById(itemObjId);
+
+    if (!bagItem) {
+      return null;
+    }
+
+    if (bagItem?.happiness) {
+      const updatedUserSchema = await UserSchema.findByIdAndUpdate(
+        userSchema._id,
+        {
+          happiness: userSchema.happiness + bagItem.happiness,
+        },
+      );
+
+      if (updatedUserSchema) {
+        return await updateBagItemOwnership(itemId, userId, qty - 1);
+      }
+    }
+    return null;
   } catch (e) {
     console.log(e);
     return null;
@@ -95,7 +173,7 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
       {
         qty: qty - 1,
       },
-      { new: true } 
+      { new: true },
     );
 
     if (!bagItemOwnership) {
@@ -134,7 +212,7 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
         {
           $set: newEquippedItems,
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updatedEquippedItems) {
@@ -152,8 +230,9 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
 async function unequipBagItem(equippedItemsId: string, itemId: string) {
   try {
     const bagItemObjId = new mongoose.Types.ObjectId(itemId);
-    
-    const equippedItems = await EquippedItemsSchema.findById(equippedItemsId).lean<EquippedItems>();
+
+    const equippedItems =
+      await EquippedItemsSchema.findById(equippedItemsId).lean<EquippedItems>();
 
     if (!equippedItems) {
       return null;
@@ -167,7 +246,7 @@ async function unequipBagItem(equippedItemsId: string, itemId: string) {
     const updatedEquippedItem = await EquippedItemsSchema.findOneAndReplace(
       { _id: equippedItemsId },
       targetEquippedItems as EquippedItems,
-      { new: true } 
+      { new: true },
     );
 
     if (!updatedEquippedItem) {
@@ -185,7 +264,7 @@ async function unequipBagItem(equippedItemsId: string, itemId: string) {
       updatedItemOwnership = await BagItemOwnershipSchema.findByIdAndUpdate(
         itemOwnership._id,
         { qty: itemOwnership.qty + 1 },
-        { new: true }
+        { new: true },
       );
     } else {
       updatedItemOwnership = await BagItemOwnershipSchema.create({
@@ -228,7 +307,9 @@ async function getUserEquippedItems(userId: string) {
     });
 
     if (!userEquippedItems) {
-      userEquippedItems = await EquippedItemsSchema.create({ userId: userObjId });
+      userEquippedItems = await EquippedItemsSchema.create({
+        userId: userObjId,
+      });
     }
 
     if (!userEquippedItems) {
@@ -275,7 +356,6 @@ async function getUserInventory(userId: string) {
     }
 
     return userInventory;
-
   } catch (e) {
     console.log(e);
     return null;
@@ -290,4 +370,6 @@ export const InventoryModel = {
   getAllStoreItems,
   getUserEquippedItems,
   getUserInventory,
+  buyItem,
+  useTreat
 };
