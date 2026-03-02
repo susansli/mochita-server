@@ -16,6 +16,7 @@ async function createUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
+      isTraveling: false
     });
 
     if (response) {
@@ -29,7 +30,7 @@ async function createUser(req: Request, res: Response) {
 }
 
 async function updateUser(req: Request, res: Response) {
-  const { day, happiness, sprouts } = req.body;
+  const { day, happiness, sprouts, isTraveling } = req.body;
   const errMsg = assertUser(day, happiness, sprouts);
   if (errMsg.length > 0) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
@@ -40,6 +41,7 @@ async function updateUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
+      isTraveling: isTraveling
     });
 
     if (response) {

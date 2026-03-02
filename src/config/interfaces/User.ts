@@ -5,5 +5,6 @@ export interface User extends Identifiable {
     day: number;
     happiness: number;
     sprouts: number;
+    isTraveling: boolean;
 }
 

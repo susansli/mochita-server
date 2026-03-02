@@ -14,6 +14,10 @@ const schema = new mongoose.Schema<User>({
     type: Number,
     required: true,
   },
+  isTraveling: {
+    type: Boolean,
+    returned: true
+  }
 });
 
 // do not prune _id from User docs
