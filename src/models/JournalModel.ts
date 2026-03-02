@@ -7,11 +7,11 @@ async function createJournalEntry(
   userId: string,
   date: string,
   text: string,
-  tagIds: string[] = []
+  tagIds: string[] = [],
 ) {
   try {
     const userObjId = new mongoose.Types.ObjectId(userId);
-    
+
     const newEntry = await JournalEntrySchema.create({
       userId: userObjId,
       date: date,
@@ -46,18 +46,18 @@ async function updateJournalEntry(
   entryId: string,
   date: string,
   text: string,
-  tagIds?: string[]
+  tagIds?: string[],
 ) {
   try {
     const entryObjId = new mongoose.Types.ObjectId(entryId);
-    
+
     const updatedEntry = await JournalEntrySchema.findByIdAndUpdate(
       entryObjId,
       {
         date: date,
         text: text,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedEntry) {
@@ -70,9 +70,11 @@ async function updateJournalEntry(
       });
 
       for (const rel of existingRelationships) {
-        const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(rel._id);
+        const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(
+          rel._id,
+        );
         if (!deletedRel) {
-           return null;
+          return null;
         }
       }
 
@@ -84,7 +86,7 @@ async function updateJournalEntry(
           });
 
           if (!newRel) {
-             return null;
+            return null;
           }
         }
       }
@@ -106,14 +108,16 @@ async function deleteJournalEntry(entryId: string) {
     });
 
     for (const rel of relationships) {
-      const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(rel._id);
+      const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(
+        rel._id,
+      );
       if (!deletedRel) {
         return false;
       }
     }
 
     const deletedEntry = await JournalEntrySchema.findByIdAndDelete(entryObjId);
-    
+
     if (!deletedEntry) {
       return false;
     }
@@ -129,11 +133,11 @@ async function createJournalTag(
   userId: string,
   label: string,
   value: string,
-  color: string
+  color: string,
 ) {
   try {
     const userObjId = new mongoose.Types.ObjectId(userId);
-    
+
     const newTag = await JournalTagSchema.create({
       userId: userObjId,
       label: label,
@@ -156,11 +160,11 @@ async function updateJournalTag(
   tagId: string,
   label: string,
   value: string,
-  color: string
+  color: string,
 ) {
   try {
     const tagObjId = new mongoose.Types.ObjectId(tagId);
-    
+
     const updatedTag = await JournalTagSchema.findByIdAndUpdate(
       tagObjId,
       {
@@ -168,7 +172,7 @@ async function updateJournalTag(
         value: value,
         color: color,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedTag) {
@@ -191,14 +195,16 @@ async function deleteJournalTag(tagId: string) {
     });
 
     for (const rel of relationships) {
-      const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(rel._id);
+      const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(
+        rel._id,
+      );
       if (!deletedRel) {
         return false;
       }
     }
 
     const deletedTag = await JournalTagSchema.findByIdAndDelete(tagObjId);
-    
+
     if (!deletedTag) {
       return false;
     }
@@ -213,11 +219,11 @@ async function deleteJournalTag(tagId: string) {
 async function getJournalEntriesByDate(
   userId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
 ) {
   try {
     const userObjId = new mongoose.Types.ObjectId(userId);
-    
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -259,13 +265,13 @@ async function getJournalEntriesByDate(
 async function getUserTags(userId: string) {
   try {
     const userObjId = new mongoose.Types.ObjectId(userId);
-    
+
     const tags = await JournalTagSchema.find({ userId: userObjId });
-    
+
     if (!tags) {
       return null;
     }
-    
+
     return tags;
   } catch (e) {
     console.error(e);
@@ -281,5 +287,5 @@ export const JournalModel = {
   updateJournalTag,
   deleteJournalTag,
   getJournalEntriesByDate,
-  getUserTags
+  getUserTags,
 };
