@@ -56,9 +56,9 @@ export async function generateLocationImage(
     });
 
     return {
-        url: uploadResult.secure_url,
-        base64Data: base64Data,
-        mimeType: mimeType
+      url: uploadResult.secure_url,
+      base64Data: base64Data,
+      mimeType: mimeType,
     };
   } catch (e) {
     console.log("error: ", e);
@@ -66,15 +66,16 @@ export async function generateLocationImage(
   }
 }
 
-export async function generateLocationName(
-  prompt: string,
-) {
+export async function generateLocationName(prompt: string) {
   try {
+    const imageResponse = await fetch(
+      "https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png",
+    );
 
-    const imageResponse = await fetch("https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png");
-    
     if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image from URL: ${imageResponse.statusText}`);
+      throw new Error(
+        `Failed to fetch image from URL: ${imageResponse.statusText}`,
+      );
     }
 
     const mimeType = imageResponse.headers.get("content-type") || "image/png";
@@ -97,7 +98,7 @@ export async function generateLocationName(
     });
 
     if (!textResponse) {
-        return null;
+      return null;
     }
 
     return textResponse.text;
@@ -111,12 +112,15 @@ export async function generateLocationFlavor(
   locationName: string,
   prompt: string,
 ) {
-    try {
+  try {
+    const imageResponse = await fetch(
+      "https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png",
+    );
 
-        const imageResponse = await fetch("https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png");
-    
     if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch image from URL: ${imageResponse.statusText}`);
+      throw new Error(
+        `Failed to fetch image from URL: ${imageResponse.statusText}`,
+      );
     }
 
     const mimeType = imageResponse.headers.get("content-type") || "image/png";
@@ -139,7 +143,7 @@ export async function generateLocationFlavor(
     });
 
     if (!textResponse) {
-        return null;
+      return null;
     }
 
     return textResponse.text;
