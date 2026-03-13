@@ -21,6 +21,10 @@ const schema = new mongoose.Schema<BagItem>({
   happiness: {
     type: Number,
   },
+  flavorText: {
+    type: String,
+    required: true,
+  }
 });
 
 schema.plugin(stripAndFormatIds); 
