@@ -11,6 +11,7 @@ import { UserRouter } from './routes/UserRouter.js';
 import { InventoryRouter } from './routes/InventoryRouter.js';
 import { JournalRouter } from './routes/JournalRouter.js';
 import { GoalsRouter } from './routes/GoalsRouter.js';
+import { TravelRouter } from './routes/TravelRouter.js';
 
 const app = express();
 app.use(express.json());
@@ -29,6 +30,7 @@ app.use('/user', UserRouter);
 app.use('/inventory', InventoryRouter);
 app.use('/journal', JournalRouter);
 app.use('/goals', GoalsRouter);
+app.use('/travel', TravelRouter);
 
 const server = app.listen(Number(process.env.SERVER_PORT), String(process.env.SERVER_IP), () => {
   mongoose.set('strictQuery', false);

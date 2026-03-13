@@ -19,7 +19,7 @@ import {
 import { BagItemMetadataSchema } from "../config/schemas/BagItemMetadataSchema.js";
 import { TripDataSchema } from "../config/schemas/TripDataSchema.js";
 
-export function generateLocationPrompt(isRare: boolean) {
+function generateLocationPrompt(isRare: boolean) {
   const travelData = isRare ? rareLocationData : commonLocationData;
 
   let travelLocation = getRandomElemFromArray(Object.keys(travelData));
@@ -31,7 +31,7 @@ export function generateLocationPrompt(isRare: boolean) {
   return ""; // should never happen
 }
 
-export async function generateLocationImage(
+async function generateLocationImage(
   isRare: boolean,
   basePrompt: string,
 ) {
@@ -76,7 +76,7 @@ export async function generateLocationImage(
   }
 }
 
-export async function generateLocationName(
+async function generateLocationName(
   prompt: string,
   base64Data: string,
   mimeType: string,
@@ -108,7 +108,7 @@ export async function generateLocationName(
   }
 }
 
-export async function generateLocationFlavor(
+async function generateLocationFlavor(
   locationName: string,
   prompt: string,
   base64Data: string,
@@ -278,4 +278,8 @@ async function beginTrip(userId: string, equippedItemsId: string) {
     console.log("error: ", e);
     return null;
   }
+}
+
+export const TravelModel = {
+  beginTrip
 }
