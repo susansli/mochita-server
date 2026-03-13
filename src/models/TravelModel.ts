@@ -26,7 +26,7 @@ export async function generateLocationImage(
   basePrompt: string,
 ) {
   try {
-    const prompt = `Create an illustration in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${basePrompt} ${isRare ? rareLocationInstruction : commonLocationInstruction}. Do not include any people or animals in the image generated, should just be a landscape.`;
+    const prompt = `Create an illustration in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${basePrompt} ${isRare ? rareLocationInstruction : commonLocationInstruction}. Make no references to Tabikaeru in the image or easter egg.`;
 
     const response = await gemini.models.generateContent({
       model: "gemini-3.1-flash-image-preview",
