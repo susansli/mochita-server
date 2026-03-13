@@ -6,8 +6,9 @@ export interface TripData extends Identifiable {
     locationImgUrl: string;
     locationName: string;
     locationFlavorText: string;
-    tripDuration: string;
+    tripDuration: number;
     tripEndProb: number;
+    tripEasterEggProb: number;
     currentTravelStageText: string;
     startDateString: string;
     endDateString?: string;

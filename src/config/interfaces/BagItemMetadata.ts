@@ -5,5 +5,6 @@ export interface BagItemMetadata extends Identifiable {
     bagItemId: mongoose.Types.ObjectId,
     tripEndProbMod: number;
     tripRareProbMod: number;
+    tripDurationMod: number;
     tripEventEasterEggProbMod: number;
 }

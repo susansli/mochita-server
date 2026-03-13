@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { gemini } from "../config/ai-models/gemini.js";
 import cloudinary from "../config/cloudinary/cloudinary.js";
 
@@ -7,7 +8,16 @@ import {
   rareLocationInstruction,
   rareLocationData,
 } from "../config/data/locationData.js";
+import { EquippedItemsSchema } from "../config/schemas/EquippedItemsSchema.js";
 import { getRandomElemFromArray } from "../utils/getRandomElemFromArray.js";
+import {
+  EASTER_EGG_PROBABILITY,
+  RARE_LOCATION_PROBABILITY,
+  TRIP_DURATION,
+  TRIP_END_PROBABILITY,
+} from "../config/constants/contants.js";
+import { BagItemMetadataSchema } from "../config/schemas/BagItemMetadataSchema.js";
+import { TripDataSchema } from "../config/schemas/TripDataSchema.js";
 
 export function generateLocationPrompt(isRare: boolean) {
   const travelData = isRare ? rareLocationData : commonLocationData;
@@ -66,22 +76,12 @@ export async function generateLocationImage(
   }
 }
 
-export async function generateLocationName(prompt: string) {
+export async function generateLocationName(
+  prompt: string,
+  base64Data: string,
+  mimeType: string,
+) {
   try {
-    const imageResponse = await fetch(
-      "https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png",
-    );
-
-    if (!imageResponse.ok) {
-      throw new Error(
-        `Failed to fetch image from URL: ${imageResponse.statusText}`,
-      );
-    }
-
-    const mimeType = imageResponse.headers.get("content-type") || "image/png";
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const base64Data = Buffer.from(arrayBuffer).toString("base64");
-
     const textResponse = await gemini.models.generateContent({
       model: "gemini-3.1-flash-lite-preview",
       contents: [
@@ -111,22 +111,10 @@ export async function generateLocationName(prompt: string) {
 export async function generateLocationFlavor(
   locationName: string,
   prompt: string,
+  base64Data: string,
+  mimeType: string,
 ) {
   try {
-    const imageResponse = await fetch(
-      "https://res.cloudinary.com/drt4r7tyw/image/upload/v1772931807/mochita/fznglxfyznjhw8rdfxnv.png",
-    );
-
-    if (!imageResponse.ok) {
-      throw new Error(
-        `Failed to fetch image from URL: ${imageResponse.statusText}`,
-      );
-    }
-
-    const mimeType = imageResponse.headers.get("content-type") || "image/png";
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const base64Data = Buffer.from(arrayBuffer).toString("base64");
-
     const textResponse = await gemini.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [
@@ -147,6 +135,145 @@ export async function generateLocationFlavor(
     }
 
     return textResponse.text;
+  } catch (e) {
+    console.log("error: ", e);
+    return null;
+  }
+}
+
+async function beginTrip(userId: string, equippedItemsId: string) {
+  try {
+    // Find equipped items
+
+    const equippedItemsObjId = new mongoose.Types.ObjectId(equippedItemsId);
+
+    const userEquippedItems =
+      await EquippedItemsSchema.findById(equippedItemsObjId);
+
+    if (!userEquippedItems) {
+      return null;
+    }
+
+    // Calculate rarity prob, easter egg prob, trip end prob
+
+    let rarityProb = RARE_LOCATION_PROBABILITY;
+    let easterEggProb = EASTER_EGG_PROBABILITY;
+    let tripEndProb = TRIP_END_PROBABILITY;
+    let tripDuration = TRIP_DURATION;
+
+    if (
+      !userEquippedItems?.slot1 ||
+      !userEquippedItems?.slot2 ||
+      !userEquippedItems?.slot3 ||
+      !userEquippedItems?.slot4
+    ) {
+      return null;
+    }
+
+    const slot1Metadata = await BagItemMetadataSchema.findOne({
+      bagItemId: userEquippedItems.slot1,
+    });
+    const slot2Metadata = await BagItemMetadataSchema.findOne({
+      bagItemId: userEquippedItems.slot2,
+    });
+    const slot3Metadata = await BagItemMetadataSchema.findOne({
+      bagItemId: userEquippedItems.slot3,
+    });
+    const slot4Metadata = await BagItemMetadataSchema.findOne({
+      bagItemId: userEquippedItems.slot4,
+    });
+
+    if (!slot1Metadata || !slot2Metadata || !slot3Metadata || !slot4Metadata) {
+      return null;
+    }
+
+    rarityProb +=
+      slot1Metadata.tripRareProbMod +
+      slot2Metadata.tripRareProbMod +
+      slot3Metadata.tripRareProbMod +
+      slot4Metadata.tripRareProbMod;
+
+    easterEggProb +=
+      slot1Metadata.tripEventEasterEggProbMod +
+      slot2Metadata.tripEventEasterEggProbMod +
+      slot3Metadata.tripEventEasterEggProbMod +
+      slot4Metadata.tripEventEasterEggProbMod;
+
+    tripEndProb +=
+      slot1Metadata.tripEndProbMod +
+      slot2Metadata.tripEndProbMod +
+      slot3Metadata.tripEndProbMod +
+      slot4Metadata.tripEndProbMod;
+    
+      tripDuration +=
+      slot1Metadata.tripDurationMod +
+      slot2Metadata.tripDurationMod +
+      slot3Metadata.tripDurationMod +
+      slot4Metadata.tripDurationMod;
+
+    // Delete equipped items schema (consumed)
+
+    const deleteEquippedItems =
+      await EquippedItemsSchema.findByIdAndDelete(equippedItemsObjId);
+
+    if (!deleteEquippedItems) {
+      return null; // should throw in a mech to restore the user's equipped items if this happens
+    }
+
+    // generate base location prompt
+
+    const isRare = Math.random() <= rarityProb;
+
+    const basePrompt = generateLocationPrompt(isRare);
+
+    const locationImage = await generateLocationImage(isRare, basePrompt);
+
+    if (!locationImage) {
+        
+      return null;
+    }
+
+    const locationName = await generateLocationName(
+      basePrompt,
+      locationImage.base64Data,
+      locationImage.mimeType,
+    );
+
+    if (!locationName) {
+      return null;
+    } 
+
+    const locationFlavor = await generateLocationFlavor(
+      locationName,
+      basePrompt,
+      locationImage.base64Data,
+      locationImage.mimeType,
+    );  
+
+    if (!locationFlavor) {
+      return null;
+    }     
+    // create trip data schema with all the generated data and calculated probabilities
+
+    const tripData = {
+      userId: new mongoose.Types.ObjectId(userId),
+      locationImgUrl: locationImage.url,
+      locationName: locationName,
+      locationFlavorText: locationFlavor,
+      tripDuration: tripDuration,
+      tripEndProb: tripEndProb,
+      tripEasterEggProb: easterEggProb,
+      currentTravelStageText: "Mochita has just started her trip! Keep checking for updates on her adventure.",
+      startDateString: new Date().toLocaleDateString(),
+    };
+
+    const createdTripData = await TripDataSchema.create(tripData);
+    if (!createdTripData) {
+      return null;
+    }
+
+    return createdTripData;
+
   } catch (e) {
     console.log("error: ", e);
     return null;

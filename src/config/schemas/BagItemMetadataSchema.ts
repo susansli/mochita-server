@@ -11,6 +11,10 @@ const schema = new mongoose.Schema<BagItemMetadata>({
     type: Number,
     required: true,
   },
+  tripDurationMod: {
+    type: Number,
+    required: true,
+  },
   tripRareProbMod: {
     type: Number,
     required: true,

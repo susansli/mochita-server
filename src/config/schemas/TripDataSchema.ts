@@ -20,10 +20,14 @@ const schema = new mongoose.Schema<TripData>({
     required: true,
   },
   tripDuration: {
-    type: String,
+    type: Number,
     required: true,
   },
   tripEndProb: {
+    type: Number,
+    required: true,
+  },
+  tripEasterEggProb: {
     type: Number,
     required: true,
   },
