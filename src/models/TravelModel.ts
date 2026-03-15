@@ -28,7 +28,7 @@ function generateLocationPrompt(isRare: boolean) {
     return `A ${travelLocation.replace(/_/g, " ")} that has ${travelData[travelLocation]["vibes"]} vibes and is described as follows: ${travelData[travelLocation]["location-description"]}.`;
   }
 
-  return ""; // should never happen
+  throw new Error("Failed to generate location prompt."); // should never happen
 }
 
 async function generateLocationImage(
@@ -279,6 +279,27 @@ async function beginTrip(userId: string, equippedItemsId: string) {
     return null;
   }
 }
+
+async function createTripPostcard() {
+  // roll to se
+
+}
+
+async function endTrip() {
+  
+}
+
+async function continueTrip() {
+
+}
+
+
+
+async function createTripUpdate() {
+
+}
+
+
 
 export const TravelModel = {
   beginTrip
