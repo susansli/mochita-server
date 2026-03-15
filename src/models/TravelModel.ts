@@ -12,6 +12,7 @@ import { EquippedItemsSchema } from "../config/schemas/EquippedItemsSchema.js";
 import { getRandomElemFromArray } from "../utils/getRandomElemFromArray.js";
 import {
   EASTER_EGG_PROBABILITY,
+  POSTCARD_GENERATION_PROBABILITY,
   RARE_LOCATION_PROBABILITY,
   TRIP_DURATION,
   TRIP_END_PROBABILITY,
@@ -308,24 +309,58 @@ async function createTripUpdate(userId: string) {
 
   if (!doesFirstPostcardExist) {
     // generate one postcard
+    const createdPostcard = await createTripPostcard(
+      activeTrip,
+      activeTrip._id,
+    );
+
+
+    if (!createdPostcard) {
+      return null;
+    }
+
+    // standard trip update
+    return await continueTrip(activeTrip, daysElapsed, activeTrip._id);
+
   } else {
     // otherwise, this means this is at least day 2 of their trip
 
     // check if the trip naturally ends
     if (daysElapsed === activeTrip.tripDuration) {
       // generate natural trip end
+
+      return await endTrip(false, activeTrip, daysElapsed, activeTrip._id);
     }
 
     // check if the trip ends (unlucky roll)
 
-    const isTripOverEarly = Math.random() <= activeTrip.tripEndProb;
+    if (Math.random() <= activeTrip.tripEndProb) {
+      // generate early trip end
 
-    if (isTripOverEarly) {
+      return await endTrip(true, activeTrip, daysElapsed, activeTrip._id);
+    } else {
+      // roll for additional postcard generation
+      if (Math.random() <= POSTCARD_GENERATION_PROBABILITY) {
+        const createdPostcard = await createTripPostcard(
+          activeTrip,
+          activeTrip._id,
+        );
+
+        if (!createdPostcard) {
+          return null;
+        }
+      }
+
+      // standard trip update
+      return await continueTrip(activeTrip, daysElapsed, activeTrip._id);
     }
   }
 }
 
-async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.ObjectId) {
+async function createTripPostcard(
+  tripData: TripData,
+  tripId: mongoose.Types.ObjectId,
+) {
   try {
     // fetch from image url and transform to base64 to feed into gemini for postcard generation
     const mochitaImageRef = await fetch(
@@ -352,7 +387,7 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
 
     // pass to gemini api
 
-    const imgPrompt = `Create a postcard in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${tripData.locationFlavorText}. The postcard should feature Mochita, the white cartoon cat provided as reference somewhere in the image with appropriate accessories to the location. Do not make the postcard explicitly reference Tabikaeru in the postcard. The postcard should look like something that could be sent from this location named ${tripData.locationName} and resemble the location graphic, also provided as reference.`;
+    const imgPrompt = `Create a postcard in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${tripData.locationFlavorText}. The postcard should feature Mochita, the white cartoon cat provided as reference somewhere in the image with appropriate accessories to the location. Do not make the postcard explicitly reference Tabikaeru anywhere. The postcard should look like something that could be sent from this location named ${tripData.locationName} and resemble the location graphic, also provided as reference.`;
 
     const response = await gemini.models.generateContent({
       model: "gemini-3.1-flash-image-preview",
@@ -366,7 +401,7 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
         },
         {
           inlineData: {
-            mimeType: locationMimeType || "image/jpeg",
+            mimeType: locationMimeType || "image/png",
             data: locationBase64data,
           },
         },
@@ -388,7 +423,7 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
       "image/jpeg";
 
     if (!postcardBase64Data) {
-        return null;
+      return null;
     }
 
     const postcardDataUri = `data:${postcardMimeType};base64,${postcardBase64Data}`;
@@ -398,12 +433,12 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
     });
 
     if (!uploadResult || !uploadResult.secure_url) {
-        return null;
+      return null;
     }
 
     // generate postcard text with gemini
 
-    const textPrompt = `${mochitaPromptInstructions} Generate 3-4 sentences of fun, whimsical and creative postcard text to go along with this postcard image based on the location flavor text: ${tripData.locationFlavorText} and location name: ${tripData.locationName}. The postcard text should be something that could be written by a traveler visiting this location and should reference the location name. Only output the postcard text and nothing else. The postcard image is provided as reference, and the text must be relevant.`;
+    const textPrompt = `${mochitaPromptInstructions} Generate 3-4 sentences of fun, whimsical and creative postcard text to go along with this postcard image based on the location flavor text: ${tripData.locationFlavorText} and location name: ${tripData.locationName}. The postcard text should be something that could be written by a traveler visiting this location and should be consistent with the location data provided. Only output the postcard text and nothing else. The postcard image is provided as reference, and the text must be relevant.`;
 
     const textResponse = await gemini.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -411,16 +446,22 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
         {
           role: "user",
           parts: [
-            { inlineData: { data: postcardBase64Data, mimeType: postcardMimeType } },
             {
-              text: textPrompt            },
+              inlineData: {
+                data: postcardBase64Data,
+                mimeType: postcardMimeType,
+              },
+            },
+            {
+              text: textPrompt,
+            },
           ],
         },
       ],
     });
 
     if (!textResponse || !textResponse.text) {
-        return null;
+      return null;
     }
 
     // create postcard schema with url and reference to trip
@@ -432,25 +473,121 @@ async function createTripPostcard(tripData: TripData, tripId: mongoose.Types.Obj
       postcardText: textResponse.text,
     };
 
-
     const createdPostcard = await PostcardSchema.create(postcardData);
-    
+
     if (!createdPostcard) {
-        return null;
+      return null;
     }
     return createdPostcard;
-
-
   } catch (e) {
     console.log("error: ", e);
     return null;
   }
 }
 
-async function endTrip(earlyEnd: boolean) {}
+async function endTrip(
+  earlyEnd: boolean,
+  tripData: TripData,
+  daysElapsed: number,
+  tripId: mongoose.Types.ObjectId,
+) {
+  try {
+    let textPrompt;
 
-async function continueTrip() {}
+    if (earlyEnd) {
+      textPrompt = `${mochitaPromptInstructions} Generate 2 sentences of fun, whimsical and creative text describing the end of a trip that ended early due to unfortunate circumstances. The trip was to a location called ${tripData.locationName} with the following flavor text: ${tripData.locationFlavorText}. The text should be something that could be written by a traveler whose trip ended early and should be consistent with the location name and flavor text. It should flow naturally from the last trip update: ${tripData.currentTravelStageText} Only output the trip end text and nothing else.`;
+    } else {
+      textPrompt = `${mochitaPromptInstructions} Generate 2 sentences of fun, whimsical and creative text describing the end of a trip that ended after a fulfilling adventure. The trip was to a location called ${tripData.locationName} with the following flavor text: ${tripData.locationFlavorText}. The text should be something that could be written by a traveler whose trip ended naturally and should be consistent with the location name and flavor text. It should flow naturally from the last trip update: ${tripData.currentTravelStageText} Only output the trip end text and nothing else.`;
+    }
+
+    const textResponse = await gemini.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: textPrompt,
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!textResponse || !textResponse.text) {
+      return null;
+    }
+
+    const updatedTripData = await TripDataSchema.findByIdAndUpdate(
+      tripId,
+      {
+        currentTravelStageText: textResponse.text,
+        endDateString: new Date().toLocaleDateString(),
+        daysElapsed: daysElapsed,
+      },
+      { new: true },
+    );
+
+    if (!updatedTripData) {
+      return null;
+    }
+
+    return updatedTripData;
+  } catch (e) {
+    console.log("error: ", e);
+    return null;
+  }
+}
+
+async function continueTrip(
+  tripData: TripData,
+  daysElapsed: number,
+  tripId: mongoose.Types.ObjectId,
+) {
+  let textPrompt = `${mochitaPromptInstructions} Generate 2 sentences of fun, whimsical and creative text describing the next stage of a trip. The trip is to a location called ${tripData.locationName} with the following flavor text: ${tripData.locationFlavorText}. The text should be something that could be written by a traveler whose trip is ongoing and should be consistent with the location name and flavor text. It should flow naturally from the last trip update: ${tripData.currentTravelStageText} Only output the next stage trip update text and nothing else.`;
+
+  // roll for easter egg event
+  if (Math.random() <= tripData.tripEasterEggProb) {
+    textPrompt += ` Also, include in the update an additional sentence of an extraordinary event that happened, like an easter egg event. Make it really unique and rare.`;
+  }
+
+  // call gemini api
+
+  const textResponse = await gemini.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: textPrompt,
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!textResponse || !textResponse.text) {
+    return null;
+  }
+
+  const updatedTripData = await TripDataSchema.findByIdAndUpdate(
+    tripId,
+    {
+      currentTravelStageText: textResponse.text,
+      daysElapsed: daysElapsed,
+    },
+    { new: true },
+  );
+
+  if (!updatedTripData) {
+    return null;
+  }
+
+  return updatedTripData;
+}
 
 export const TravelModel = {
   beginTrip,
+  createTripUpdate,
 };
