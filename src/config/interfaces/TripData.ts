@@ -12,4 +12,5 @@ export interface TripData extends Identifiable {
     currentTravelStageText: string;
     startDateString: string;
     endDateString?: string;
+    daysElapsed: number;
 }

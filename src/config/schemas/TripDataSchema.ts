@@ -42,6 +42,11 @@ const schema = new mongoose.Schema<TripData>({
   endDateString: {
     type: String,
   },
+  daysElapsed: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
 });
 
 schema.plugin(stripAndFormatIds);
