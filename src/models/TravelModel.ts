@@ -282,7 +282,7 @@ async function beginTrip(userId: string, equippedItemsId: string) {
 }
 
 async function createTripUpdate(userId: string) {
-  // this function rolls every 24hrs via cron
+  // this function rolls every 24hrs via cron (idea is to cycle through all users)
 
   // check if the user has an active trip
 
@@ -471,6 +471,7 @@ async function createTripPostcard(
       tripDataId: tripId,
       imageUrl: uploadResult.secure_url,
       postcardText: textResponse.text,
+      date: new Date().toLocaleDateString(),
     };
 
     const createdPostcard = await PostcardSchema.create(postcardData);

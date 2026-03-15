@@ -19,6 +19,10 @@ const schema = new mongoose.Schema<Postcard>({
     type: String,
     required: true,
   },
+  date: {
+    type: String,
+    required: true,
+  },
 });
 
 schema.plugin(stripAndFormatIds);
