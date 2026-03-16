@@ -6,5 +6,6 @@ export interface User extends Identifiable {
     happiness: number;
     sprouts: number;
     isTraveling: boolean;
+    chatRounds: number; // resets every 24hrs
 }
 

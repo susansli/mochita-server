@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import type { User } from "../interfaces/User.js";
+import { MAX_CHAT_ROUNDS } from "../constants/contants.js";
 
 const schema = new mongoose.Schema<User>({
   day: {
@@ -17,6 +18,11 @@ const schema = new mongoose.Schema<User>({
   isTraveling: {
     type: Boolean,
     returned: true
+  },
+  chatRounds: {
+    type: Number,
+    required: true,
+    default: MAX_CHAT_ROUNDS
   }
 });
 
