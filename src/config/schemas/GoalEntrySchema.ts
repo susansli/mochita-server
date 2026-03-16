@@ -22,7 +22,11 @@ const schema = new mongoose.Schema<GoalEntry>({
   index: {
     type: Number,
     required: true
-  }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 schema.plugin(stripAndFormatIds);

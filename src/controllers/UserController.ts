@@ -3,6 +3,7 @@ import { ResponseCodes } from "../config/enums/ResponseCodes.js";
 import { assertUser } from "./asserts/assertUser.js";
 import { UserModel } from "../models/UserModel.js";
 import { assertString } from "./asserts/asserts.js";
+import { MAX_CHAT_ROUNDS } from "../config/constants/contants.js";
 
 async function createUser(req: Request, res: Response) {
   const { day, happiness, sprouts } = req.body;
@@ -16,6 +17,8 @@ async function createUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
+      isTraveling: false,
+      chatRounds: MAX_CHAT_ROUNDS
     });
 
     if (response) {
@@ -29,7 +32,7 @@ async function createUser(req: Request, res: Response) {
 }
 
 async function updateUser(req: Request, res: Response) {
-  const { day, happiness, sprouts } = req.body;
+  const { day, happiness, sprouts, isTraveling } = req.body;
   const errMsg = assertUser(day, happiness, sprouts);
   if (errMsg.length > 0) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
@@ -40,6 +43,8 @@ async function updateUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
+      isTraveling: isTraveling,
+      chatRounds: MAX_CHAT_ROUNDS
     });
 
     if (response) {
@@ -54,8 +59,8 @@ async function updateUser(req: Request, res: Response) {
 
 async function getUser(req: Request, res: Response) {
   const { id } = req.body;
-  const isErr = assertString(id);
-  if (isErr) {
+
+  if (!assertString(id)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
       errMsg: "There was a problem with the id parameter.",
     });
@@ -73,8 +78,8 @@ async function getUser(req: Request, res: Response) {
 
 async function deleteAllUserData(req: Request, res: Response) {
   const { id } = req.body;
-  const isErr = assertString(id);
-  if (isErr) {
+
+  if (!assertString(id)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
       errMsg: "There was a problem with the id parameter.",
     });

@@ -24,9 +24,7 @@ async function createUser(data: User) {
 async function updateUser(data: User) {
   try {
     const response = await UserSchema.findByIdAndUpdate(data.id, {
-      day: data.day,
-      happiness: data.happiness,
-      sprouts: data.sprouts,
+      ...data
     });
 
     if (!response) {

@@ -18,14 +18,15 @@ const schema = new mongoose.Schema<BagItem>({
   sproutCost: {
     type: Number,
   },
-  qty: {
-    type: Number,
-  },
   happiness: {
     type: Number,
   },
+  flavorText: {
+    type: String,
+    required: true,
+  }
 });
 
-schema.plugin(stripAndFormatIds);
+schema.plugin(stripAndFormatIds); 
 
 export const BagItemSchema = mongoose.model<BagItem>("BagItem", schema);
