@@ -3,6 +3,7 @@ import { ResponseCodes } from "../config/enums/ResponseCodes.js";
 import { assertUser } from "./asserts/assertUser.js";
 import { UserModel } from "../models/UserModel.js";
 import { assertString } from "./asserts/asserts.js";
+import { MAX_CHAT_ROUNDS } from "../config/constants/contants.js";
 
 async function createUser(req: Request, res: Response) {
   const { day, happiness, sprouts } = req.body;
@@ -16,7 +17,8 @@ async function createUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
-      isTraveling: false
+      isTraveling: false,
+      chatRounds: MAX_CHAT_ROUNDS
     });
 
     if (response) {
@@ -41,7 +43,8 @@ async function updateUser(req: Request, res: Response) {
       day: day,
       happiness: happiness,
       sprouts: sprouts,
-      isTraveling: isTraveling
+      isTraveling: isTraveling,
+      chatRounds: MAX_CHAT_ROUNDS
     });
 
     if (response) {

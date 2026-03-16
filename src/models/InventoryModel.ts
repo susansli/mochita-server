@@ -341,7 +341,6 @@ async function getUserInventory(userId: string) {
         name: bagItem.name,
         imgUrl: bagItem.imgUrl,
         type: bagItem.type,
-        effects: bagItem?.effects ? bagItem.effects : [],
       };
 
       if (bagItem?.sproutCost) {
