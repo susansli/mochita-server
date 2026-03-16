@@ -254,7 +254,7 @@ async function beginTrip(userId: string, equippedItemsId: string) {
     if (!locationFlavor) {
       return null;
     }
-    // create trip data schema with all the generated data and calculated probabilities
+    // create trip data schema with all the generated data and calculated probs
 
     const tripData = {
       userId: new mongoose.Types.ObjectId(userId),

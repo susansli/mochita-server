@@ -43,5 +43,6 @@ async function chat() {
 }
 
 export const ChatModel = {
-  chat
+  chat,
+  chatCleanup
 }

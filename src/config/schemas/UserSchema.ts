@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import type { User } from "../interfaces/User.js";
 import { MAX_CHAT_ROUNDS } from "../constants/contants.js";
+import { stripAndFormatIds } from "../../utils/stripAndFormatIds.js";
 
 const schema = new mongoose.Schema<User>({
   day: {
@@ -26,6 +27,6 @@ const schema = new mongoose.Schema<User>({
   }
 });
 
-// do not prune _id from User docs
+schema.plugin(stripAndFormatIds);
 
 export const UserSchema = mongoose.model<User>("User", schema);

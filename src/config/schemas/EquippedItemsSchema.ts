@@ -23,4 +23,4 @@ const schema = new mongoose.Schema<EquippedItems>({
 
 schema.plugin(stripAndFormatIds);
 
-export const EquippedItemsSchema = mongoose.model<EquippedItems>("EquippedItemsm", schema);
+export const EquippedItemsSchema = mongoose.model<EquippedItems>("EquippedItems", schema);
