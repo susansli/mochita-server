@@ -11,7 +11,11 @@ import {
 import { EquippedItemsSchema } from "../config/schemas/EquippedItemsSchema.js";
 import { getRandomElemFromArray } from "../utils/getRandomElemFromArray.js";
 import {
+  DEFAULT_GEMINI_IMG_MODEL,
+  DEFAULT_GEMINI_MODEL,
   EASTER_EGG_PROBABILITY,
+  FAST_GEMINI_MODEL,
+  MOCHITA_REF_URL,
   POSTCARD_GENERATION_PROBABILITY,
   RARE_LOCATION_PROBABILITY,
   TRIP_DURATION,
@@ -41,7 +45,7 @@ async function generateLocationImage(isRare: boolean, basePrompt: string) {
     const prompt = `Create an illustration in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${basePrompt} ${isRare ? rareLocationInstruction : commonLocationInstruction}. Make no references to Tabikaeru in the image or easter egg.`;
 
     const response = await gemini.models.generateContent({
-      model: "gemini-3.1-flash-image-preview",
+      model: DEFAULT_GEMINI_IMG_MODEL,
       contents: prompt,
       config: {
         imageConfig: {
@@ -85,7 +89,7 @@ async function generateLocationName(
 ) {
   try {
     const textResponse = await gemini.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
+      model: FAST_GEMINI_MODEL,
       contents: [
         {
           role: "user",
@@ -118,7 +122,7 @@ async function generateLocationFlavor(
 ) {
   try {
     const textResponse = await gemini.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: DEFAULT_GEMINI_MODEL,
       contents: [
         {
           role: "user",
@@ -364,7 +368,7 @@ async function createTripPostcard(
   try {
     // fetch from image url and transform to base64 to feed into gemini for postcard generation
     const mochitaImageRef = await fetch(
-      "https://res.cloudinary.com/drt4r7tyw/image/upload/v1773610761/mochi-ref_dedkcu.png",
+      MOCHITA_REF_URL,
     );
     if (!mochitaImageRef.ok) {
       return null;
@@ -390,7 +394,7 @@ async function createTripPostcard(
     const imgPrompt = `Create a postcard in a kawaii, nostalgic, colorful, and hand-drawn style similar to the art style of the game Tabikaeru with these details: ${tripData.locationFlavorText}. The postcard should feature Mochita, the white cartoon cat provided as reference somewhere in the image with appropriate accessories to the location. Do not make the postcard explicitly reference Tabikaeru anywhere. The postcard should look like something that could be sent from this location named ${tripData.locationName} and resemble the location graphic, also provided as reference.`;
 
     const response = await gemini.models.generateContent({
-      model: "gemini-3.1-flash-image-preview",
+      model: DEFAULT_GEMINI_IMG_MODEL,
       contents: [
         { text: imgPrompt },
         {
@@ -502,7 +506,7 @@ async function endTrip(
     }
 
     const textResponse = await gemini.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: DEFAULT_GEMINI_MODEL,
       contents: [
         {
           role: "user",
@@ -555,7 +559,7 @@ async function continueTrip(
   // call gemini api
 
   const textResponse = await gemini.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: DEFAULT_GEMINI_MODEL,
     contents: [
       {
         role: "user",

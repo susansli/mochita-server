@@ -7,4 +7,5 @@ export interface GoalEntry extends Identifiable {
   text: string;
   isComplete: boolean;
   index: number;
+  createdAt: Date;
 }

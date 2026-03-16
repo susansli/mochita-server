@@ -17,3 +17,13 @@ export const MAX_CHAT_ROUNDS = 50; // 25 from user, 25 from mochita per chat ses
 export const MAX_MEMORIES_STORED = 15;
 export const NUM_CONTEXT_JOURNAL_ENTRIES = 10;
 export const NUM_CONTEXT_GOALS = 15;
+
+// AI
+
+export const DEFAULT_GEMINI_MODEL = "gemini-3-flash-preview";
+export const FAST_GEMINI_MODEL = "gemini-3.1-flash-lite-preview";
+export const DEFAULT_GEMINI_IMG_MODEL = "gemini-3.1-flash-image-preview";
+
+// Refs
+
+export const MOCHITA_REF_URL = "https://res.cloudinary.com/drt4r7tyw/image/upload/v1773610761/mochi-ref_dedkcu.png";
