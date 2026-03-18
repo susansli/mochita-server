@@ -5,6 +5,7 @@ import { gemini } from "../config/ai-models/gemini.js";
 import { DEFAULT_GEMINI_MODEL, FAST_GEMINI_MODEL, MAX_MEMORIES_STORED } from "../config/constants/contants.js";
 import { JournalEntrySchema } from "../config/schemas/JournalEntrySchema.js";
 import { GoalEntrySchema } from "../config/schemas/GoalEntrySchema.js";
+import { UserContextSchema } from "../config/schemas/UserContextSchema.js";
 
 async function retrieveMemories(userId: mongoose.Types.ObjectId) {
   try {
@@ -185,10 +186,23 @@ async function createUserContext(userId: string) {
   }
 }
 
-async function chatCleanup() {
+async function chatCleanup(userId: string) {
   try {
     // deletes user context, may do more stuff in the future
-    
+    // call this on chat start in case user exited chat unexpectedly
+    const userContextExists = await UserContextSchema.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+
+    if (!userContextExists) {
+      return true; // if no context exists, consider cleanup successful
+    }
+
+    const isUserContextDeleted = await UserContextSchema.findOneAndDelete({ userId: new mongoose.Types.ObjectId(userId) });
+
+    if (!isUserContextDeleted) {
+      return false;
+    }
+
+    return true;
 
   } catch (e) {
     console.error("error:", e);
@@ -196,9 +210,31 @@ async function chatCleanup() {
   }
 }
 
-async function endChat() {
+async function endChat(userId: string, chatHistory: ChatItem[]) {
   // call chat cleanup
   // update memories
+  try {
+
+    const isMemoryUpdated = await updateMemories(userId, chatHistory);
+
+    if (!isMemoryUpdated) {
+      return false;
+    }
+
+    const isChatCleanedUp = await chatCleanup(userId);
+
+    if (!isChatCleanedUp) {
+      return false;
+    }
+
+    return true;
+
+  } catch (e) {
+    console.error("error:", e);
+    return false;
+
+  }
+
 }
 
 async function chat() {
@@ -211,4 +247,5 @@ export const ChatModel = {
   chat,
   chatCleanup,
   deleteMemories,
+  endChat,
 };
