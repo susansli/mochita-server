@@ -3,10 +3,6 @@ import { stripAndFormatIds } from "../../utils/stripAndFormatIds.js";
 import type { JournalTag } from "../interfaces/JournalTag.js";
 
 const schema = new mongoose.Schema<JournalTag>({
-  userId: {
-    type: mongoose.Types.ObjectId,
-    required: true,
-  },
   label: {
     type: String,
     required: true,

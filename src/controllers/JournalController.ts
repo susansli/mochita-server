@@ -70,85 +70,6 @@ async function deleteJournalEntry(req: Request, res: Response) {
   }
 }
 
-async function createJournalTag(req: Request, res: Response) {
-  const { userId, label, value, color } = req.body;
-
-  if (
-    !assertString(userId) ||
-    !assertString(label) ||
-    !assertString(value) ||
-    !assertString(color)
-  ) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg:
-        "There was a problem with the userId, label, value, or color parameters.",
-    });
-  } else {
-    const response = await JournalModel.createJournalTag(
-      userId,
-      label,
-      value,
-      color,
-    );
-    if (response) {
-      res.status(ResponseCodes.OK).send({ journalTag: response });
-    } else {
-      res.status(ResponseCodes.API_ERROR).send({
-        errorMsg: "There was a problem creating the journal tag.",
-      });
-    }
-  }
-}
-
-async function updateJournalTag(req: Request, res: Response) {
-  const { tagId, label, value, color } = req.body;
-
-  if (
-    !assertString(tagId) ||
-    !assertString(label) ||
-    !assertString(value) ||
-    !assertString(color)
-  ) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg:
-        "There was a problem with the tagId, label, value, or color parameters.",
-    });
-  } else {
-    const response = await JournalModel.updateJournalTag(
-      tagId,
-      label,
-      value,
-      color,
-    );
-    if (response) {
-      res.status(ResponseCodes.OK).send({ journalTag: response });
-    } else {
-      res.status(ResponseCodes.API_ERROR).send({
-        errorMsg: "There was a problem updating the journal tag.",
-      });
-    }
-  }
-}
-
-async function deleteJournalTag(req: Request, res: Response) {
-  const { tagId } = req.body;
-
-  if (!assertString(tagId)) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg: "There was a problem with the tagId parameter.",
-    });
-  } else {
-    const response = await JournalModel.deleteJournalTag(tagId);
-    if (response) {
-      res.status(ResponseCodes.OK).send({ success: response });
-    } else {
-      res.status(ResponseCodes.API_ERROR).send({
-        errorMsg: "There was a problem deleting the journal tag.",
-      });
-    }
-  }
-}
-
 async function getJournalEntriesByDate(req: Request, res: Response) {
   const { userId, startDate, endDate } = req.body;
 
@@ -177,15 +98,9 @@ async function getJournalEntriesByDate(req: Request, res: Response) {
   }
 }
 
-async function getUserTags(req: Request, res: Response) {
-  const { userId } = req.body;
+async function getAllTags(_req: Request, res: Response) {
 
-  if (!assertString(userId)) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg: "There was a problem with the userId parameter.",
-    });
-  } else {
-    const response = await JournalModel.getUserTags(userId);
+  const response = await JournalModel.getAllTags();
     if (response) {
       res.status(ResponseCodes.OK).send({ journalTags: response });
     } else {
@@ -193,16 +108,12 @@ async function getUserTags(req: Request, res: Response) {
         errorMsg: "There was a problem getting the user tags.",
       });
     }
-  }
 }
 
 export const JournalController = {
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
-  createJournalTag,
-  updateJournalTag,
-  deleteJournalTag,
   getJournalEntriesByDate,
-  getUserTags,
+  getAllTags,
 };

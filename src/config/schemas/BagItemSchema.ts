@@ -24,6 +24,10 @@ const schema = new mongoose.Schema<BagItem>({
   flavorText: {
     type: String,
     required: true,
+  },
+  effectText: {
+    type: String,
+    required: true,
   }
 });
 

@@ -129,93 +129,6 @@ async function deleteJournalEntry(entryId: string) {
   }
 }
 
-async function createJournalTag(
-  userId: string,
-  label: string,
-  value: string,
-  color: string,
-) {
-  try {
-    const userObjId = new mongoose.Types.ObjectId(userId);
-
-    const newTag = await JournalTagSchema.create({
-      userId: userObjId,
-      label: label,
-      value: value,
-      color: color,
-    });
-
-    if (!newTag) {
-      return null;
-    }
-
-    return newTag;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
-
-async function updateJournalTag(
-  tagId: string,
-  label: string,
-  value: string,
-  color: string,
-) {
-  try {
-    const tagObjId = new mongoose.Types.ObjectId(tagId);
-
-    const updatedTag = await JournalTagSchema.findByIdAndUpdate(
-      tagObjId,
-      {
-        label: label,
-        value: value,
-        color: color,
-      },
-      { new: true },
-    );
-
-    if (!updatedTag) {
-      return null;
-    }
-
-    return updatedTag;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
-}
-
-async function deleteJournalTag(tagId: string) {
-  try {
-    const tagObjId = new mongoose.Types.ObjectId(tagId);
-
-    const relationships = await JournalTagRelationshipSchema.find({
-      tagId: tagObjId,
-    });
-
-    for (const rel of relationships) {
-      const deletedRel = await JournalTagRelationshipSchema.findByIdAndDelete(
-        rel._id,
-      );
-      if (!deletedRel) {
-        return false;
-      }
-    }
-
-    const deletedTag = await JournalTagSchema.findByIdAndDelete(tagObjId);
-
-    if (!deletedTag) {
-      return false;
-    }
-
-    return true;
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
-}
-
 async function getJournalEntriesByDate(
   userId: string,
   startDate: string,
@@ -262,11 +175,9 @@ async function getJournalEntriesByDate(
   }
 }
 
-async function getUserTags(userId: string) {
+async function getAllTags() {
   try {
-    const userObjId = new mongoose.Types.ObjectId(userId);
-
-    const tags = await JournalTagSchema.find({ userId: userObjId });
+    const tags = await JournalTagSchema.find();
 
     if (!tags) {
       return null;
@@ -283,9 +194,6 @@ export const JournalModel = {
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
-  createJournalTag,
-  updateJournalTag,
-  deleteJournalTag,
   getJournalEntriesByDate,
-  getUserTags,
+  getAllTags,
 };

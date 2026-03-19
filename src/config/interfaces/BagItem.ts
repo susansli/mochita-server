@@ -9,4 +9,5 @@ export interface BagItem extends Identifiable {
   sproutCost?: number;
   happiness?: number;
   flavorText: string;
+  effectText: string;
 }
