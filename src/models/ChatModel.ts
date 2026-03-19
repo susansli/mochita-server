@@ -2,10 +2,16 @@ import mongoose from "mongoose";
 import { ChatMemorySchema } from "../config/schemas/ChatMemorySchema.js";
 import { ChatItem } from "../config/interfaces/ChatItem.js";
 import { gemini } from "../config/ai-models/gemini.js";
-import { DEFAULT_GEMINI_MODEL, FAST_GEMINI_MODEL, MAX_MEMORIES_STORED } from "../config/constants/contants.js";
+import {
+  DEFAULT_GEMINI_MODEL,
+  FAST_GEMINI_MODEL,
+  MAX_MEMORIES_STORED,
+} from "../config/constants/contants.js";
 import { JournalEntrySchema } from "../config/schemas/JournalEntrySchema.js";
 import { GoalEntrySchema } from "../config/schemas/GoalEntrySchema.js";
 import { UserContextSchema } from "../config/schemas/UserContextSchema.js";
+import { UserContext } from "../config/interfaces/UserContext.js";
+import { mochitaPromptInstructions } from "../config/constants/promptData.js";
 
 async function retrieveMemories(userId: mongoose.Types.ObjectId) {
   try {
@@ -49,7 +55,7 @@ async function generateNewMemoryFromChat(
     // then asking gemeini to get the most important 1-3 points in 1-3 sentences
 
     const formattedTranscript = chatHistory
-      .map((turn) => `${turn.role.toUpperCase()}: ${turn.text}`)
+      .map((turn) => `${turn.role.toUpperCase()}: ${turn?.parts[0]?.text || ""}`)
       .join("\n");
 
     const prompt = `Given the following chat transcript, extract the most important 1-3 points from the conversation in 1-3 sentences:\n\n${formattedTranscript} Don't include pleasantries, just the key points. Only return the summary and nothing else.`;
@@ -168,7 +174,7 @@ async function createUserContext(userId: string) {
       .join("\n");
 
     const textPrompt = `Given the following information about a user, create a concise summary of the user's context that can be used to inform an AI assistant in a chat. The summary should capture the key aspects of the user's recent activities, goals, and important memories. Format the summary in a clear and concise manner:\n\nUser Memories:\n${formattedMemories}\n\nUser Journal Entries:\n${formattedJournalEntries}\n\nUser Goals:\n${formattedGoals}\n\n Limit the summary to under 300 words.`;
-    
+
     const textResponse = await gemini.models.generateContent({
       model: DEFAULT_GEMINI_MODEL,
       contents: [{ text: textPrompt }],
@@ -179,7 +185,6 @@ async function createUserContext(userId: string) {
     }
 
     return textResponse.text;
-
   } catch (e) {
     console.error("error:", e);
     return null;
@@ -190,20 +195,23 @@ async function chatCleanup(userId: string) {
   try {
     // deletes user context, may do more stuff in the future
     // call this on chat start in case user exited chat unexpectedly
-    const userContextExists = await UserContextSchema.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+    const userContextExists = await UserContextSchema.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+    });
 
     if (!userContextExists) {
       return true; // if no context exists, consider cleanup successful
     }
 
-    const isUserContextDeleted = await UserContextSchema.findOneAndDelete({ userId: new mongoose.Types.ObjectId(userId) });
+    const isUserContextDeleted = await UserContextSchema.findOneAndDelete({
+      userId: new mongoose.Types.ObjectId(userId),
+    });
 
     if (!isUserContextDeleted) {
       return false;
     }
 
     return true;
-
   } catch (e) {
     console.error("error:", e);
     return false;
@@ -214,7 +222,6 @@ async function endChat(userId: string, chatHistory: ChatItem[]) {
   // call chat cleanup
   // update memories
   try {
-
     const isMemoryUpdated = await updateMemories(userId, chatHistory);
 
     if (!isMemoryUpdated) {
@@ -228,19 +235,67 @@ async function endChat(userId: string, chatHistory: ChatItem[]) {
     }
 
     return true;
-
   } catch (e) {
     console.error("error:", e);
     return false;
-
   }
-
 }
 
-async function chat() {
+async function chat(userId: string, chatHistory: ChatItem[]) {
   // essentially, each turn of the chat will call this func, it will recieve an array of chatitems
-  // chat has a max of 25 turns, e.g. 50 chat items
-  // after which the chat will end and memory will update
+  // format the chat items on the front end
+
+
+  try {
+    const userObjId = new mongoose.Types.ObjectId(userId);
+
+    // check if user contexts or not
+    const userContext = await UserContextSchema.findOne({ userId: userObjId });
+    let userContextContent;
+
+    // if not then create it and then get text content
+    if (!userContext) {
+      const newUserContext = await createUserContext(userId);
+      if (newUserContext) {
+        userContextContent = newUserContext;
+      } else {
+        return null;
+      }
+    } else {
+      userContextContent = userContext.context;
+    }
+
+    // the initial round of chat should be implemented silently so that there is context to ref
+
+    const initialUserMessage = `This is the first round of the chat is used to provide user context for the rest of the chat - do not make any reference to this message at all in subsequent chats. This is the context of the user: ${userContextContent} Reference it for the rest of the chat if it's relevant to the messages being sent, but don't make any explicit references to its existence, ever. Take a normal tone for the rest of the chat in line with your role-play as Mochita.`;
+
+    const chatContents: ChatItem[] = [
+      // Invisible context injection turn
+      { role: "user", parts: [{ text: initialUserMessage }] },
+        {
+          role: "model",
+          parts: [{ text: "Acknowledged. I will keep this in mind." }],
+        },
+        ...chatHistory
+    ];
+
+    const response = await gemini.models.generateContent({
+      model: DEFAULT_GEMINI_MODEL,
+      config: {
+        systemInstruction: `${mochitaPromptInstructions} Always maintain a friendly and supportive tone, and refer to the user as "friend". Use the user context provided in the first message if relevant, but never make explicit references to it or its injection into the conversation. Respond in a way that is consistent with your role-play as Mochita, the user's AI companion. If the user shares something personal, respond with empathy and kindness, and try to engage with the content they shared in a meaningful way. Always be supportive and encouraging, and avoid being judgmental or critical. Do not break character and do not ask for questions unless it seems natural from the context of the conversation.`,
+      },
+      contents: chatContents,
+    });
+
+    if (!response || !response.text) {
+      return null;
+    }
+    return response.text;
+
+  } catch (e) {
+    console.error("error:", e);
+    return null;
+  }
 }
 
 export const ChatModel = {

@@ -1,4 +1,4 @@
 export interface ChatItem {
     role: string;
-    text: string;
+    parts: {text: string}[];
 }
