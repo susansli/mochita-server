@@ -22,7 +22,7 @@ async function createUser(req: Request, res: Response) {
     });
 
     if (response) {
-      res.status(ResponseCodes.OK).send({ user: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem creating the user.",
@@ -48,7 +48,7 @@ async function updateUser(req: Request, res: Response) {
     });
 
     if (response) {
-      res.status(ResponseCodes.OK).send({ user: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem updating the user.",
@@ -67,7 +67,7 @@ async function getUser(req: Request, res: Response) {
   } else {
     const response = await UserModel.getUser(id);
     if (response) {
-      res.status(ResponseCodes.OK).send({ user: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the user.",
@@ -86,7 +86,7 @@ async function deleteAllUserData(req: Request, res: Response) {
   } else {
     const response = await UserModel.deleteAllUserData(id);
     if (response) {
-      res.status(ResponseCodes.OK).send({ user: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem deleting the user.",

@@ -16,7 +16,7 @@ async function beginTrip(req: Request, res: Response) {
   const response = await TravelModel.beginTrip(userId, equippedItemsId);
 
     if (response) {
-      res.status(ResponseCodes.OK).send(response);
+      res.status(ResponseCodes.OK).send({data: response});
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errMsg: "There was a problem beginning the trip.",

@@ -14,7 +14,7 @@ async function chat(req: Request, res: Response) {
     const response = await ChatModel.chat(userId, chatHistory);
     
     if (response) {
-      res.status(ResponseCodes.OK).send({ text: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem generating the chat response.",
@@ -34,7 +34,7 @@ async function chatCleanup(req: Request, res: Response) {
     const response = await ChatModel.chatCleanup(userId);
     
     if (response) {
-      res.status(ResponseCodes.OK).send({ success: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem cleaning up the chat.",
@@ -54,7 +54,7 @@ async function deleteMemories(req: Request, res: Response) {
     const response = await ChatModel.deleteMemories(userId);
     
     if (response) {
-      res.status(ResponseCodes.OK).send({ success: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem deleting memories.",
@@ -74,7 +74,7 @@ async function endChat(req: Request, res: Response) {
     const response = await ChatModel.endChat(userId, chatHistory);
     
     if (response) {
-      res.status(ResponseCodes.OK).send({ success: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem ending the chat.",

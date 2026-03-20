@@ -13,7 +13,7 @@ async function addBagItemOwnership(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.addBagItemOwnership(itemName, userId, qty);
     if (response) {
-      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem adding the bag item ownership.",
@@ -32,7 +32,7 @@ async function updateBagItemOwnership(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.updateBagItemOwnership(itemId, userId, qty);
     if (response) {
-      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem updating the bag item ownership.",
@@ -51,7 +51,7 @@ async function equipBagItem(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.equipBagItem(itemId, userId, qty);
     if (response) {
-      res.status(ResponseCodes.OK).send({ equippedItems: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem equipping the bag item.",
@@ -70,7 +70,7 @@ async function unequipBagItem(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.unequipBagItem(equippedItemsId, itemId);
     if (response) {
-      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem unequipping the bag item.",
@@ -83,7 +83,7 @@ async function getAllStoreItems(_req: Request, res: Response) {
   const response = await InventoryModel.getAllStoreItems();
   
   if (response) {
-    res.status(ResponseCodes.OK).send({ storeItems: response });
+    res.status(ResponseCodes.OK).send({ data: response });
   } else {
     res.status(ResponseCodes.API_ERROR).send({
       errorMsg: "There was a problem getting the store items.",
@@ -101,7 +101,7 @@ async function getUserEquippedItems(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.getUserEquippedItems(userId);
     if (response) {
-      res.status(ResponseCodes.OK).send({ equippedItems: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the user equipped items.",
@@ -120,7 +120,7 @@ async function getUserInventory(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.getUserInventory(userId);
     if (response) {
-      res.status(ResponseCodes.OK).send({ inventory: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the user inventory.",
@@ -139,7 +139,7 @@ async function buyItem(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.buyItem(itemId, userId, qty);
     if (response) {
-      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else if (response === false) {
       res.status(ResponseCodes.CLIENT_ERROR).send({
         errorMsg: "The user cannot afford this transaction.",
@@ -162,7 +162,7 @@ async function useTreat(req: Request, res: Response) {
   } else {
     const response = await InventoryModel.useTreat(itemId, userId, qty);
     if (response) {
-      res.status(ResponseCodes.OK).send({ bagItemOwnership: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem using the treat.",

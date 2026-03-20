@@ -18,7 +18,7 @@ async function createJournalEntry(req: Request, res: Response) {
       tagIds,
     );
     if (response) {
-      res.status(ResponseCodes.OK).send({ journalEntry: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem creating the journal entry.",
@@ -42,7 +42,7 @@ async function updateJournalEntry(req: Request, res: Response) {
       tagIds,
     );
     if (response) {
-      res.status(ResponseCodes.OK).send({ journalEntry: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem updating the journal entry.",
@@ -61,7 +61,7 @@ async function deleteJournalEntry(req: Request, res: Response) {
   } else {
     const response = await JournalModel.deleteJournalEntry(entryId);
     if (response) {
-      res.status(ResponseCodes.OK).send({ success: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem deleting the journal entry.",
@@ -89,7 +89,7 @@ async function getJournalEntriesByDate(req: Request, res: Response) {
       endDate,
     );
     if (response) {
-      res.status(ResponseCodes.OK).send({ journalEntries: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the journal entries.",
@@ -102,7 +102,7 @@ async function getAllTags(_req: Request, res: Response) {
 
   const response = await JournalModel.getAllTags();
     if (response) {
-      res.status(ResponseCodes.OK).send({ journalTags: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the user tags.",

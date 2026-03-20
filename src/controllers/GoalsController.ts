@@ -18,7 +18,7 @@ async function createGoal(req: Request, res: Response) {
         errorMsg: "The user has reached the maximum number of goals for this date.",
       });
     } else if (response) {
-      res.status(ResponseCodes.OK).send({ goal: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem creating the goal.",
@@ -37,7 +37,7 @@ async function updateGoalText(req: Request, res: Response) {
   } else {
     const response = await GoalModel.updateGoalText(goalId, text);
     if (response) {
-      res.status(ResponseCodes.OK).send({ goal: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem updating the goal text.",
@@ -56,7 +56,7 @@ async function markGoalAsComplete(req: Request, res: Response) {
   } else {
     const response = await GoalModel.markGoalAsComplete(goalId);
     if (response) {
-      res.status(ResponseCodes.OK).send({ goal: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem marking the goal as complete.",
@@ -75,7 +75,7 @@ async function getGoalsForDate(req: Request, res: Response) {
   } else {
     const response = await GoalModel.getGoalsForDate(userId, date);
     if (response) {
-      res.status(ResponseCodes.OK).send({ goals: response });
+      res.status(ResponseCodes.OK).send({ data: response });
     } else {
       res.status(ResponseCodes.API_ERROR).send({
         errorMsg: "There was a problem getting the goals.",
