@@ -57,6 +57,25 @@ async function updateUser(req: Request, res: Response) {
   }
 }
 
+async function updateUserSprouts(req: Request, res: Response) {
+  const { userId, sprouts } = req.body;
+  if (!assertString(userId) || !assertString(sprouts)) {
+    res.status(ResponseCodes.CLIENT_ERROR).send({
+      errMsg: "There was a problem with the userId or sprouts parameters.",
+    });
+  } else {
+    const response = await UserModel.updateUserSprouts(userId, sprouts);
+    if (response) {
+      res.status(ResponseCodes.OK).send({ data: response });
+    } else {
+      res.status(ResponseCodes.API_ERROR).send({
+        errorMsg: "There was a problem updating the user's sprouts.",
+      });
+    }
+  }
+}
+
+
 async function getUser(req: Request, res: Response) {
   const { id } = req.body;
 
@@ -100,5 +119,6 @@ export const UserController = {
   createUser,
   updateUser,
   getUser,
-  deleteAllUserData
+  deleteAllUserData,
+  updateUserSprouts
 };

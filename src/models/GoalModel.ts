@@ -47,7 +47,7 @@ async function updateGoalText(goalId: string, text: string) {
     const updatedGoal = await GoalEntrySchema.findByIdAndUpdate(
       goalObjId,
       { text: text },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedGoal) {
@@ -78,7 +78,7 @@ async function markGoalAsComplete(goalId: string) {
     const updatedGoal = await GoalEntrySchema.findByIdAndUpdate(
       goalObjId,
       { isComplete: true },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedGoal) {
@@ -91,7 +91,7 @@ async function markGoalAsComplete(goalId: string) {
       await UserSchema.findByIdAndUpdate(
         user._id,
         { sprouts: user.sprouts + JOURNAL_SPROUTS },
-        { new: true }
+        { new: true },
       );
     }
 
@@ -115,7 +115,16 @@ async function getGoalsForDate(userId: string, date: string) {
       return null;
     }
 
-    return goals.sort((a, b) => a.index - b.index);
+    return goals
+      .sort((a, b) => a.index - b.index)
+      .map((g, i) => {
+        return {
+          index: i,
+          goal: g.text,
+          isComplete: g.isComplete,
+          goalId: g._id.toString(),
+        };
+      });
   } catch (e) {
     console.error(e);
     return null;

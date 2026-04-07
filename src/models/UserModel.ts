@@ -37,6 +37,27 @@ async function updateUser(data: User) {
   }
 }
 
+async function updateUserSprouts(userId: string, sprouts: number) {
+  try {
+    const userObjId = new mongoose.Types.ObjectId(userId);
+    const response = await UserSchema.findByIdAndUpdate(
+      userObjId,
+      { sprouts: sprouts },
+      { new: true },
+    );
+
+    if (!response) {
+      return null;
+    }
+    return response.sprouts;
+
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+
 async function getUser(id: string) {
   try {
     const response = await UserSchema.findById(id);
@@ -94,4 +115,5 @@ export const UserModel = {
   getUser,
   updateUser,
   deleteAllUserData,
+  updateUserSprouts
 };

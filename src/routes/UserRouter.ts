@@ -8,3 +8,4 @@ UserRouter.route("/create").post(UserController.createUser);
 UserRouter.route("/update").put(UserController.updateUser);
 UserRouter.route("/get").post(UserController.getUser);
 UserRouter.route("/delete").delete(UserController.deleteAllUserData);
+UserRouter.route("/updateSprouts").post(UserController.updateUserSprouts);
