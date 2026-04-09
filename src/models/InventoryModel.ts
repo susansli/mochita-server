@@ -8,6 +8,7 @@ import { InventoryItem } from "../config/interfaces/InventoryItem.js";
 import { BagItemOwnership } from "../config/interfaces/BagItemOwnership.js";
 import { EquippedItems } from "../config/interfaces/EquippedItems.js";
 import { UserSchema } from "../config/schemas/UserSchema.js";
+import { BagItem } from "../config/interfaces/BagItem.js";
 
 async function addBagItemOwnership(
   itemId: mongoose.Types.ObjectId,
@@ -120,7 +121,7 @@ async function buyItem(itemId: string, userId: string, qty: number) {
       });
 
       if (existingBagItemOwnership) {
-        
+
         const updatedBagItemOwnership = await updateBagItemOwnership(
           itemId,
           userId,
@@ -354,28 +355,24 @@ async function getUserInventory(userId: string) {
     const userBagItemOwnerships: BagItemOwnership[] =
       await BagItemOwnershipSchema.find({ userId: userObjId });
 
-    const userInventory: InventoryItem[] = [];
+    const userInventory = [];
 
     for (const ownership of userBagItemOwnerships) {
       const bagItem = await BagItemSchema.findOne({ _id: ownership.bagItem });
       if (!bagItem) {
         return null;
       }
-      const inventoryItem: InventoryItem = {
-        bagItemId: ownership.bagItem.toString(),
+      const inventoryItem = {
+        id: ownership.bagItem.toString(),
         qty: ownership.qty,
         name: bagItem.name,
         imgUrl: bagItem.imgUrl,
         type: bagItem.type,
+        flavorText: bagItem.flavorText,
+        effectText: bagItem.effectText,
+        sproutCost: bagItem?.sproutCost,
+        happiness: bagItem?.happiness,
       };
-
-      if (bagItem?.sproutCost) {
-        inventoryItem.sproutCost = bagItem.sproutCost;
-      }
-
-      if (bagItem?.happiness) {
-        inventoryItem.happiness = bagItem.happiness;
-      }
 
       userInventory.push(inventoryItem);
     }
