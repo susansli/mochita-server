@@ -3,44 +3,6 @@ import { ResponseCodes } from "../config/enums/ResponseCodes.js";
 import { InventoryModel } from "../models/InventoryModel.js";
 import { assertString, assertNumber } from "./asserts/asserts.js";
 
-async function addBagItemOwnership(req: Request, res: Response) {
-  const { itemName, userId, qty } = req.body;
-
-  if (!assertString(itemName) || !assertString(userId) || !assertNumber(qty)) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg: "There was a problem with the itemName, userId, or qty parameters.",
-    });
-  } else {
-    const response = await InventoryModel.addBagItemOwnership(itemName, userId, qty);
-    if (response) {
-      res.status(ResponseCodes.OK).send({ data: response });
-    } else {
-      res.status(ResponseCodes.API_ERROR).send({
-        errorMsg: "There was a problem adding the bag item ownership.",
-      });
-    }
-  }
-}
-
-async function updateBagItemOwnership(req: Request, res: Response) {
-  const { itemId, userId, qty } = req.body;
-
-  if (!assertString(itemId) || !assertString(userId) || !assertNumber(qty)) {
-    res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg: "There was a problem with the itemId, userId, or qty parameters.",
-    });
-  } else {
-    const response = await InventoryModel.updateBagItemOwnership(itemId, userId, qty);
-    if (response) {
-      res.status(ResponseCodes.OK).send({ data: response });
-    } else {
-      res.status(ResponseCodes.API_ERROR).send({
-        errorMsg: "There was a problem updating the bag item ownership.",
-      });
-    }
-  }
-}
-
 async function equipBagItem(req: Request, res: Response) {
   const { itemId, userId, qty } = req.body;
 
@@ -172,8 +134,6 @@ async function useTreat(req: Request, res: Response) {
 }
 
 export const InventoryController = {
-    addBagItemOwnership,
-    updateBagItemOwnership,
     equipBagItem,
     unequipBagItem,
     getAllStoreItems,

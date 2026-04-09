@@ -10,13 +10,13 @@ import { EquippedItems } from "../config/interfaces/EquippedItems.js";
 import { UserSchema } from "../config/schemas/UserSchema.js";
 
 async function addBagItemOwnership(
-  itemName: string,
+  itemId: mongoose.Types.ObjectId,
   userId: string,
   qty: number,
 ) {
   try {
     const targetBagItem = await BagItemSchema.findOne({
-      name: itemName,
+      _id: itemId,
     });
 
     if (!targetBagItem) {
@@ -113,7 +113,33 @@ async function buyItem(itemId: string, userId: string, qty: number) {
         return null;
       }
 
-      return await addBagItemOwnership(itemId, userId, qty);
+      // check if the user already owns 1, if so then just update qty
+      const existingBagItemOwnership = await BagItemOwnershipSchema.findOne({
+        userId: userObjId,
+        bagItem: itemObjId,
+      });
+
+      if (existingBagItemOwnership) {
+        
+        const updatedBagItemOwnership = await updateBagItemOwnership(
+          itemId,
+          userId,
+          existingBagItemOwnership.qty + qty,
+        );
+
+        if (!updatedBagItemOwnership) {
+          return null;
+        } else {
+          return await getUserInventory(userId); // updated inventory
+        }
+      }
+
+      const newOwnership = await addBagItemOwnership(itemObjId, userId, qty);
+      if (!newOwnership) {
+        return null;
+      }
+
+      return await getUserInventory(userId);
     }
 
     return false; // means the user can't afford the transaction - null is an error
@@ -370,5 +396,5 @@ export const InventoryModel = {
   getUserEquippedItems,
   getUserInventory,
   buyItem,
-  useTreat
+  useTreat,
 };
