@@ -1,12 +1,13 @@
 import { ItemType } from "../enums/ItemType.js";
 
 export interface InventoryItem {
-  bagItemId: string;
-  qty: number;
+  id: string;
   name: string;
   imgUrl: string;
   type: ItemType;
   sproutCost?: number;
+  qty?: number;
   happiness?: number;
-  effects?: string[];
+  flavorText: string;
+  effectText: string;
 }

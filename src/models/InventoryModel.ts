@@ -355,14 +355,14 @@ async function getUserInventory(userId: string) {
     const userBagItemOwnerships: BagItemOwnership[] =
       await BagItemOwnershipSchema.find({ userId: userObjId });
 
-    const userInventory = [];
+    const userInventory: InventoryItem[] = [];
 
     for (const ownership of userBagItemOwnerships) {
       const bagItem = await BagItemSchema.findOne({ _id: ownership.bagItem });
       if (!bagItem) {
         return null;
       }
-      const inventoryItem = {
+      const inventoryItem: InventoryItem = {
         id: ownership.bagItem.toString(),
         qty: ownership.qty,
         name: bagItem.name,
@@ -370,9 +370,15 @@ async function getUserInventory(userId: string) {
         type: bagItem.type,
         flavorText: bagItem.flavorText,
         effectText: bagItem.effectText,
-        sproutCost: bagItem?.sproutCost,
-        happiness: bagItem?.happiness,
       };
+
+      if (bagItem?.sproutCost) {
+        inventoryItem.sproutCost = bagItem.sproutCost;
+      }
+
+      if (bagItem?.happiness) {
+        inventoryItem.happiness = bagItem.happiness;
+      }
 
       userInventory.push(inventoryItem);
     }
