@@ -3,8 +3,8 @@ import { InventoryController } from "../controllers/InventoryController.js";
 
 export const InventoryRouter: Router = express.Router();
 
-InventoryRouter.route("/equipBagItem").post(InventoryController.equipBagItem);
-InventoryRouter.route("/unequipBagItem").post(InventoryController.unequipBagItem);
+InventoryRouter.route("/equipItem").post(InventoryController.equipBagItem);
+InventoryRouter.route("/unequipItem").post(InventoryController.unequipBagItem);
 InventoryRouter.route("/getAllStoreItems").get(InventoryController.getAllStoreItems);
 InventoryRouter.route("/getUserEquippedItems").post(InventoryController.getUserEquippedItems);
 InventoryRouter.route("/getUserInventory").post(InventoryController.getUserInventory);

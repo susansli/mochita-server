@@ -9,6 +9,7 @@ import { BagItemOwnership } from "../config/interfaces/BagItemOwnership.js";
 import { EquippedItems } from "../config/interfaces/EquippedItems.js";
 import { UserSchema } from "../config/schemas/UserSchema.js";
 import { BagItem } from "../config/interfaces/BagItem.js";
+import { ItemType } from "../config/enums/ItemType.js";
 
 async function addBagItemOwnership(
   itemId: mongoose.Types.ObjectId,
@@ -121,7 +122,6 @@ async function buyItem(itemId: string, userId: string, qty: number) {
       });
 
       if (existingBagItemOwnership) {
-
         const updatedBagItemOwnership = await updateBagItemOwnership(
           itemId,
           userId,
@@ -192,6 +192,9 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
     const bagItemObjId = new mongoose.Types.ObjectId(itemId);
     const userObjId = new mongoose.Types.ObjectId(userId);
 
+    // create new equipped items obj to return to FE
+    const returnedEquippedItems: { [key: string]: InventoryItem } = {};
+
     const bagItemOwnership = await BagItemOwnershipSchema.findOneAndUpdate(
       {
         bagItem: bagItemObjId,
@@ -207,17 +210,6 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
       return null;
     }
 
-    if (qty === 1) {
-      const deletedBagItemOwnership = await BagItemOwnershipSchema.deleteOne({
-        bagItem: bagItemObjId,
-        userId: userObjId,
-      });
-
-      if (!deletedBagItemOwnership) {
-        return null;
-      }
-    }
-
     let equippedItems = await EquippedItemsSchema.findOne({
       userId: userObjId,
     }).lean<EquippedItems>();
@@ -227,15 +219,59 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
         userId: userObjId,
         slot1: bagItemOwnership.bagItem,
       });
-      return newEquippedItems;
+
+      if (!newEquippedItems || !newEquippedItems?.slot1) {
+        return null;
+      }
+
+      const bagItem = await BagItemSchema.findOne({
+        _id: newEquippedItems.slot1,
+      });
+
+      if (!bagItem) {
+        return null;
+      }
+
+      const itemOwnership = await BagItemOwnershipSchema.findOne({
+        userId: userObjId,
+        bagItem: newEquippedItems.slot1,
+      });
+
+      if (!itemOwnership) {
+        return null;
+      } else {
+        returnedEquippedItems[bagItem.type.toString()] = {
+          id: newEquippedItems.slot1.toString(),
+          name: bagItem.name,
+          imgUrl: bagItem.imgUrl,
+          type: bagItem.type,
+          flavorText: bagItem.flavorText,
+          effectText: bagItem.effectText,
+          qty: itemOwnership.qty,
+        };
+      }
+
+      if (bagItemOwnership.qty === 0) {
+        const deletedBagItemOwnership =
+          await BagItemOwnershipSchema.findByIdAndDelete(bagItemOwnership._id);
+        if (!deletedBagItemOwnership) {
+          return null;
+        }
+      }
+
+      return returnedEquippedItems;
     } else {
       const newEquippedItems = fillNextEmptyEquippedSlot(
         equippedItems,
         bagItemOwnership.bagItem,
       );
 
+      // Prevent MongoDB immutable field errors
+      delete (newEquippedItems as any)._id;
+      delete (newEquippedItems as any).__v;
+
       const updatedEquippedItems = await EquippedItemsSchema.findOneAndUpdate(
-        { _id: equippedItems.id },
+        { userId: userObjId }, // Target by userId instead of the undefined id virtual
         {
           $set: newEquippedItems,
         },
@@ -246,7 +282,135 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
         return null;
       }
 
-      return updatedEquippedItems;
+      // check if slot 1 is occupied, if so find the bag item details and add to returned equipped items obj
+      // then have to find the ownership to get the qty
+      if (updatedEquippedItems.slot1) {
+        const bagItem = await BagItemSchema.findOne({
+          _id: updatedEquippedItems.slot1,
+        });
+
+        if (!bagItem) {
+          return null;
+        }
+
+        const itemOwnership = await BagItemOwnershipSchema.findOne({
+          userId: userObjId,
+          bagItem: updatedEquippedItems.slot1,
+        });
+
+        if (!itemOwnership) {
+          return null;
+        } else {
+          returnedEquippedItems[bagItem.type.toString()] = {
+            id: updatedEquippedItems.slot1.toString(),
+            name: bagItem.name,
+            imgUrl: bagItem.imgUrl,
+            type: bagItem.type,
+            flavorText: bagItem.flavorText,
+            effectText: bagItem.effectText,
+            qty: itemOwnership.qty,
+          };
+        }
+      }
+
+      // repeat for slots 2 - 4
+
+      if (updatedEquippedItems.slot2) {
+        const bagItem = await BagItemSchema.findOne({
+          _id: updatedEquippedItems.slot2,
+        });
+
+        if (!bagItem) {
+          return null;
+        }
+
+        const itemOwnership = await BagItemOwnershipSchema.findOne({
+          userId: userObjId,
+          bagItem: updatedEquippedItems.slot2,
+        });
+
+        if (!itemOwnership) {
+          return null;
+        } else {
+          returnedEquippedItems[bagItem.type.toString()] = {
+            id: updatedEquippedItems.slot2.toString(),
+            name: bagItem.name,
+            imgUrl: bagItem.imgUrl,
+            type: bagItem.type,
+            flavorText: bagItem.flavorText,
+            effectText: bagItem.effectText,
+            qty: itemOwnership.qty,
+          };
+        }
+      }
+
+      if (updatedEquippedItems.slot3) {
+        const bagItem = await BagItemSchema.findOne({
+          _id: updatedEquippedItems.slot3,
+        });
+
+        if (!bagItem) {
+          return null;
+        }
+
+        const itemOwnership = await BagItemOwnershipSchema.findOne({
+          userId: userObjId,
+          bagItem: updatedEquippedItems.slot3,
+        });
+
+        if (!itemOwnership) {
+          return null;
+        } else {
+          returnedEquippedItems[bagItem.type.toString()] = {
+            id: updatedEquippedItems.slot3.toString(),
+            name: bagItem.name,
+            imgUrl: bagItem.imgUrl,
+            type: bagItem.type,
+            flavorText: bagItem.flavorText,
+            effectText: bagItem.effectText,
+            qty: itemOwnership.qty,
+          };
+        }
+      }
+
+      if (updatedEquippedItems.slot4) {
+        const bagItem = await BagItemSchema.findOne({
+          _id: updatedEquippedItems.slot4,
+        });
+
+        if (!bagItem) {
+          return null;
+        }
+
+        const itemOwnership = await BagItemOwnershipSchema.findOne({
+          userId: userObjId,
+          bagItem: updatedEquippedItems.slot4,
+        });
+
+        if (!itemOwnership) {
+          return null;
+        } else {
+          returnedEquippedItems[bagItem.type.toString()] = {
+            id: updatedEquippedItems.slot4.toString(),
+            name: bagItem.name,
+            imgUrl: bagItem.imgUrl,
+            type: bagItem.type,
+            flavorText: bagItem.flavorText,
+            effectText: bagItem.effectText,
+            qty: itemOwnership.qty,
+          };
+        }
+      }
+
+      if (bagItemOwnership.qty === 0) {
+        const deletedBagItemOwnership =
+          await BagItemOwnershipSchema.findByIdAndDelete(bagItemOwnership._id);
+        if (!deletedBagItemOwnership) {
+          return null;
+        }
+      }
+
+      return returnedEquippedItems;
     }
   } catch (e) {
     console.log(e);
