@@ -4,7 +4,7 @@ import { InventoryModel } from "../models/InventoryModel.js";
 import { assertString, assertNumber } from "./asserts/asserts.js";
 
 async function equipBagItem(req: Request, res: Response) {
-  const { itemId, userId, qty } = req.body;
+  const { itemId, userId} = req.body;
 
   if (!assertString(itemId) || !assertString(userId)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
@@ -23,14 +23,14 @@ async function equipBagItem(req: Request, res: Response) {
 }
 
 async function unequipBagItem(req: Request, res: Response) {
-  const { equippedItemsId, itemId } = req.body;
+  const { userId, itemId } = req.body;
 
-  if (!assertString(equippedItemsId) || !assertString(itemId)) {
+  if (!assertString(userId) || !assertString(itemId)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
-      errMsg: "There was a problem with the equippedItemsId or itemId parameters.",
+      errMsg: "There was a problem with the userId or itemId parameters.",
     });
   } else {
-    const response = await InventoryModel.unequipBagItem(equippedItemsId, itemId);
+    const response = await InventoryModel.unequipBagItem(userId, itemId);
     if (response) {
       res.status(ResponseCodes.OK).send({ data: response });
     } else {

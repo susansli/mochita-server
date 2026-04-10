@@ -8,8 +8,7 @@ import { InventoryItem } from "../config/interfaces/InventoryItem.js";
 import { BagItemOwnership } from "../config/interfaces/BagItemOwnership.js";
 import { EquippedItems } from "../config/interfaces/EquippedItems.js";
 import { UserSchema } from "../config/schemas/UserSchema.js";
-import { BagItem } from "../config/interfaces/BagItem.js";
-import { ItemType } from "../config/enums/ItemType.js";
+import { userInfo } from "node:os";
 
 async function addBagItemOwnership(
   itemId: mongoose.Types.ObjectId,
@@ -285,60 +284,51 @@ async function equipBagItem(itemId: string, userId: string) {
   }
 }
 
-async function unequipBagItem(equippedItemsId: string, itemId: string) {
+async function unequipBagItem(userId: string, itemId: string) {
   try {
     const bagItemObjId = new mongoose.Types.ObjectId(itemId);
+    const userObjId = new mongoose.Types.ObjectId(userId);
 
-    const equippedItems =
-      await EquippedItemsSchema.findById(equippedItemsId).lean<EquippedItems>();
+    // Fetch the document to identify which slot currently holds the item
+    const equippedItems = await EquippedItemsSchema.findOne({ userId: userObjId });
 
     if (!equippedItems) {
       return null;
     }
 
-    const targetEquippedItems = deleteItemFromEquippedSlot(
-      equippedItems,
-      bagItemObjId,
-    );
+    // Identify the specific slot using the .equals() method for ObjectIds
+    let slotToUnset = "";
+    if (equippedItems.slot1?.equals(bagItemObjId)) slotToUnset = "slot1";
+    else if (equippedItems.slot2?.equals(bagItemObjId)) slotToUnset = "slot2";
+    else if (equippedItems.slot3?.equals(bagItemObjId)) slotToUnset = "slot3";
+    else if (equippedItems.slot4?.equals(bagItemObjId)) slotToUnset = "slot4";
 
-    const updatedEquippedItem = await EquippedItemsSchema.findOneAndReplace(
-      { _id: equippedItemsId },
-      targetEquippedItems as EquippedItems,
-      { new: true },
-    );
+    if (!slotToUnset) {
+      // Item not found in any slot; return current equipped state
+      return await getUserEquippedItems(userId);
+    }
+
+    // Atomically unset the slot and increment the inventory quantity
+    const [updatedEquippedItem] = await Promise.all([
+      EquippedItemsSchema.findOneAndUpdate(
+        { userId: userObjId },
+        { $unset: { [slotToUnset]: 1 } },
+        { new: true },
+      ),
+      BagItemOwnershipSchema.findOneAndUpdate(
+        { userId: userObjId, bagItem: bagItemObjId },
+        { $inc: { qty: 1 } },
+        { upsert: true },
+      ),
+    ]);
 
     if (!updatedEquippedItem) {
       return null;
     }
 
-    const itemOwnership = await BagItemOwnershipSchema.findOne({
-      userId: updatedEquippedItem.userId,
-      bagItem: bagItemObjId,
-    });
-
-    let updatedItemOwnership;
-
-    if (itemOwnership) {
-      updatedItemOwnership = await BagItemOwnershipSchema.findByIdAndUpdate(
-        itemOwnership._id,
-        { qty: itemOwnership.qty + 1 },
-        { new: true },
-      );
-    } else {
-      updatedItemOwnership = await BagItemOwnershipSchema.create({
-        userId: updatedEquippedItem.userId,
-        bagItem: bagItemObjId,
-        qty: 1,
-      });
-    }
-
-    if (!updatedItemOwnership) {
-      return null;
-    }
-
-    return updatedItemOwnership;
+    return await getUserEquippedItems(userId);
   } catch (e) {
-    console.log(e);
+    console.error(e);
     return null;
   }
 }

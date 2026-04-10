@@ -7,17 +7,15 @@ export function deleteItemFromEquippedSlot(
 ) {
   const newEquippedItems = { ...equippedItems };
 
-  if (newEquippedItems?.slot1 === slotItem) {
+  if (newEquippedItems.slot1?.equals(slotItem)) {
     delete newEquippedItems.slot1;
-    return newEquippedItems;
-  } else if (newEquippedItems?.slot2 === slotItem) {
+  } else if (newEquippedItems.slot2?.equals(slotItem)) {
     delete newEquippedItems.slot2;
-    return newEquippedItems;
-  } else if (newEquippedItems?.slot3 === slotItem) {
+  } else if (newEquippedItems.slot3?.equals(slotItem)) {
     delete newEquippedItems.slot3;
-    return newEquippedItems;
+  } else if (newEquippedItems.slot4?.equals(slotItem)) {
+    delete newEquippedItems.slot4;
   }
 
-  delete newEquippedItems.slot4;
   return newEquippedItems;
 }
