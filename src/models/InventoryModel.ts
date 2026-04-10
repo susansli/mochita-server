@@ -187,32 +187,25 @@ async function useTreat(itemId: string, userId: string, qty: number) {
   }
 }
 
-async function equipBagItem(itemId: string, userId: string, qty: number) {
+async function equipBagItem(itemId: string, userId: string) {
   try {
     const bagItemObjId = new mongoose.Types.ObjectId(itemId);
     const userObjId = new mongoose.Types.ObjectId(userId);
 
-    // create new equipped items obj to return to FE
-    const returnedEquippedItems: { [key: string]: InventoryItem } = {};
-
+    // Decrement the quantity natively in the database to prevent race conditions
     const bagItemOwnership = await BagItemOwnershipSchema.findOneAndUpdate(
-      {
-        bagItem: bagItemObjId,
-        userId: userObjId,
-      },
-      {
-        qty: qty - 1,
-      },
+      { bagItem: bagItemObjId, userId: userObjId },
+      { $inc: { qty: -1 } },
       { new: true },
     );
 
-    if (!bagItemOwnership) {
-      return null;
-    }
+    if (!bagItemOwnership) return null;
 
     let equippedItems = await EquippedItemsSchema.findOne({
       userId: userObjId,
     }).lean<EquippedItems>();
+
+    let activeSlots: mongoose.Types.ObjectId[] = [];
 
     if (!equippedItems) {
       const newEquippedItems = await EquippedItemsSchema.create({
@@ -220,200 +213,74 @@ async function equipBagItem(itemId: string, userId: string, qty: number) {
         slot1: bagItemOwnership.bagItem,
       });
 
-      if (!newEquippedItems || !newEquippedItems?.slot1) {
-        return null;
-      }
-
-      const bagItem = await BagItemSchema.findOne({
-        _id: newEquippedItems.slot1,
-      });
-
-      if (!bagItem) {
-        return null;
-      }
-
-      const itemOwnership = await BagItemOwnershipSchema.findOne({
-        userId: userObjId,
-        bagItem: newEquippedItems.slot1,
-      });
-
-      if (!itemOwnership) {
-        return null;
-      } else {
-        returnedEquippedItems[bagItem.type.toString()] = {
-          id: newEquippedItems.slot1.toString(),
-          name: bagItem.name,
-          imgUrl: bagItem.imgUrl,
-          type: bagItem.type,
-          flavorText: bagItem.flavorText,
-          effectText: bagItem.effectText,
-          qty: itemOwnership.qty,
-        };
-      }
-
-      if (bagItemOwnership.qty === 0) {
-        const deletedBagItemOwnership =
-          await BagItemOwnershipSchema.findByIdAndDelete(bagItemOwnership._id);
-        if (!deletedBagItemOwnership) {
-          return null;
-        }
-      }
-
-      return returnedEquippedItems;
+      if (!newEquippedItems?.slot1) return null;
+      activeSlots = [newEquippedItems.slot1];
     } else {
       const newEquippedItems = fillNextEmptyEquippedSlot(
         equippedItems,
         bagItemOwnership.bagItem,
       );
 
-      // Prevent MongoDB immutable field errors
       delete (newEquippedItems as any)._id;
       delete (newEquippedItems as any).__v;
 
       const updatedEquippedItems = await EquippedItemsSchema.findOneAndUpdate(
-        { userId: userObjId }, // Target by userId instead of the undefined id virtual
-        {
-          $set: newEquippedItems,
-        },
+        { userId: userObjId },
+        { $set: newEquippedItems },
         { new: true },
       );
 
-      if (!updatedEquippedItems) {
-        return null;
-      }
+      if (!updatedEquippedItems) return null;
 
-      // check if slot 1 is occupied, if so find the bag item details and add to returned equipped items obj
-      // then have to find the ownership to get the qty
-      if (updatedEquippedItems.slot1) {
-        const bagItem = await BagItemSchema.findOne({
-          _id: updatedEquippedItems.slot1,
-        });
-
-        if (!bagItem) {
-          return null;
-        }
-
-        const itemOwnership = await BagItemOwnershipSchema.findOne({
-          userId: userObjId,
-          bagItem: updatedEquippedItems.slot1,
-        });
-
-        if (!itemOwnership) {
-          return null;
-        } else {
-          returnedEquippedItems[bagItem.type.toString()] = {
-            id: updatedEquippedItems.slot1.toString(),
-            name: bagItem.name,
-            imgUrl: bagItem.imgUrl,
-            type: bagItem.type,
-            flavorText: bagItem.flavorText,
-            effectText: bagItem.effectText,
-            qty: itemOwnership.qty,
-          };
-        }
-      }
-
-      // repeat for slots 2 - 4
-
-      if (updatedEquippedItems.slot2) {
-        const bagItem = await BagItemSchema.findOne({
-          _id: updatedEquippedItems.slot2,
-        });
-
-        if (!bagItem) {
-          return null;
-        }
-
-        const itemOwnership = await BagItemOwnershipSchema.findOne({
-          userId: userObjId,
-          bagItem: updatedEquippedItems.slot2,
-        });
-
-        if (!itemOwnership) {
-          return null;
-        } else {
-          returnedEquippedItems[bagItem.type.toString()] = {
-            id: updatedEquippedItems.slot2.toString(),
-            name: bagItem.name,
-            imgUrl: bagItem.imgUrl,
-            type: bagItem.type,
-            flavorText: bagItem.flavorText,
-            effectText: bagItem.effectText,
-            qty: itemOwnership.qty,
-          };
-        }
-      }
-
-      if (updatedEquippedItems.slot3) {
-        const bagItem = await BagItemSchema.findOne({
-          _id: updatedEquippedItems.slot3,
-        });
-
-        if (!bagItem) {
-          return null;
-        }
-
-        const itemOwnership = await BagItemOwnershipSchema.findOne({
-          userId: userObjId,
-          bagItem: updatedEquippedItems.slot3,
-        });
-
-        if (!itemOwnership) {
-          return null;
-        } else {
-          returnedEquippedItems[bagItem.type.toString()] = {
-            id: updatedEquippedItems.slot3.toString(),
-            name: bagItem.name,
-            imgUrl: bagItem.imgUrl,
-            type: bagItem.type,
-            flavorText: bagItem.flavorText,
-            effectText: bagItem.effectText,
-            qty: itemOwnership.qty,
-          };
-        }
-      }
-
-      if (updatedEquippedItems.slot4) {
-        const bagItem = await BagItemSchema.findOne({
-          _id: updatedEquippedItems.slot4,
-        });
-
-        if (!bagItem) {
-          return null;
-        }
-
-        const itemOwnership = await BagItemOwnershipSchema.findOne({
-          userId: userObjId,
-          bagItem: updatedEquippedItems.slot4,
-        });
-
-        if (!itemOwnership) {
-          return null;
-        } else {
-          returnedEquippedItems[bagItem.type.toString()] = {
-            id: updatedEquippedItems.slot4.toString(),
-            name: bagItem.name,
-            imgUrl: bagItem.imgUrl,
-            type: bagItem.type,
-            flavorText: bagItem.flavorText,
-            effectText: bagItem.effectText,
-            qty: itemOwnership.qty,
-          };
-        }
-      }
-
-      if (bagItemOwnership.qty === 0) {
-        const deletedBagItemOwnership =
-          await BagItemOwnershipSchema.findByIdAndDelete(bagItemOwnership._id);
-        if (!deletedBagItemOwnership) {
-          return null;
-        }
-      }
-
-      return returnedEquippedItems;
+      // Extract populated slots into an iterable array
+      const slots = [
+        updatedEquippedItems.slot1,
+        updatedEquippedItems.slot2,
+        updatedEquippedItems.slot3,
+        updatedEquippedItems.slot4,
+      ];
+      activeSlots = slots.filter((slot) => slot != null);
     }
+
+    // Execute fetches concurrently via Promise.all
+    const [bagItems, ownershipDocs] = await Promise.all([
+      BagItemSchema.find({ _id: { $in: activeSlots } }),
+      BagItemOwnershipSchema.find({
+        userId: userObjId,
+        bagItem: { $in: activeSlots },
+      }),
+    ]);
+
+    // Map ownership documents by bagItem ID for constant time lookups
+    const ownershipMap = new Map(
+      ownershipDocs.map((doc) => [doc.bagItem.toString(), doc.qty]),
+    );
+
+    const returnedEquippedItems: { [key: string]: InventoryItem } = {};
+
+    bagItems.forEach((bagItem) => {
+      // Default to 0 if the ownership document was previously deleted
+      const currentQty = ownershipMap.get(bagItem._id.toString()) || 0;
+
+      returnedEquippedItems[bagItem.type.toString()] = {
+        id: bagItem._id.toString(),
+        name: bagItem.name,
+        imgUrl: bagItem.imgUrl,
+        type: bagItem.type,
+        flavorText: bagItem.flavorText,
+        effectText: bagItem.effectText,
+        qty: currentQty,
+      };
+    });
+
+    // Handle deletion logic for the currently equipped item
+    if (bagItemOwnership.qty <= 0) {
+      await BagItemOwnershipSchema.findByIdAndDelete(bagItemOwnership._id);
+    }
+
+    return returnedEquippedItems;
   } catch (e) {
-    console.log(e);
+    console.error(e);
     return null;
   }
 }
@@ -493,22 +360,64 @@ async function getAllStoreItems() {
 async function getUserEquippedItems(userId: string) {
   try {
     const userObjId = new mongoose.Types.ObjectId(userId);
+
     let userEquippedItems = await EquippedItemsSchema.findOne({
       userId: userObjId,
-    });
+    }).lean();
 
     if (!userEquippedItems) {
-      userEquippedItems = await EquippedItemsSchema.create({
+      await EquippedItemsSchema.create({
         userId: userObjId,
       });
+      return {};
     }
 
-    if (!userEquippedItems) {
-      return null;
+    // Extract populated slots into an array, filtering out null/undefined
+    const activeSlots = [
+      userEquippedItems.slot1,
+      userEquippedItems.slot2,
+      userEquippedItems.slot3,
+      userEquippedItems.slot4,
+    ].filter(Boolean) as mongoose.Types.ObjectId[];
+
+    if (activeSlots.length === 0) {
+      return {};
     }
-    return userEquippedItems;
+
+    // Execute fetches concurrently via Promise.all
+    // Adding ownership fetch to fulfill the inline comment requirement
+    const [bagItems, ownershipDocs] = await Promise.all([
+      BagItemSchema.find({ _id: { $in: activeSlots } }).lean(),
+      BagItemOwnershipSchema.find({
+        userId: userObjId,
+        bagItem: { $in: activeSlots },
+      }).lean(),
+    ]);
+
+    // Map ownership documents by bagItem ID for constant time lookups
+    const ownershipMap = new Map(
+      ownershipDocs.map((doc) => [doc.bagItem.toString(), doc.qty]),
+    );
+
+    const returnedEquippedItems: { [key: string]: InventoryItem } = {};
+
+    bagItems.forEach((bagItem) => {
+      const currentQty = ownershipMap.get(bagItem._id.toString()) || 0;
+
+      returnedEquippedItems[bagItem.type.toString()] = {
+        id: bagItem._id.toString(),
+        name: bagItem.name,
+        imgUrl: bagItem.imgUrl,
+        type: bagItem.type,
+        flavorText: bagItem.flavorText,
+        effectText: bagItem.effectText,
+        qty: currentQty,
+      };
+    });
+
+    return returnedEquippedItems;
   } catch (e) {
-    console.log(e);
+    console.error(e);
     return null;
   }
 }

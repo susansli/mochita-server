@@ -6,12 +6,12 @@ import { assertString, assertNumber } from "./asserts/asserts.js";
 async function equipBagItem(req: Request, res: Response) {
   const { itemId, userId, qty } = req.body;
 
-  if (!assertString(itemId) || !assertString(userId) || !assertNumber(qty)) {
+  if (!assertString(itemId) || !assertString(userId)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
       errMsg: "There was a problem with the itemId, userId, or qty parameters.",
     });
   } else {
-    const response = await InventoryModel.equipBagItem(itemId, userId, qty);
+    const response = await InventoryModel.equipBagItem(itemId, userId);
     if (response) {
       res.status(ResponseCodes.OK).send({ data: response });
     } else {
