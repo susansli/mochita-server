@@ -115,7 +115,7 @@ async function buyItem(req: Request, res: Response) {
 }
 
 async function useTreat(req: Request, res: Response) {
-  const { itemId, userId, qty } = req.body;
+  const { userId, itemId, qty } = req.body;
 
   if (!assertString(itemId) || !assertString(userId) || !assertNumber(qty)) {
     res.status(ResponseCodes.CLIENT_ERROR).send({
