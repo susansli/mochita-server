@@ -9,6 +9,7 @@ import { BagItemOwnership } from "../config/interfaces/BagItemOwnership.js";
 import { EquippedItems } from "../config/interfaces/EquippedItems.js";
 import { UserSchema } from "../config/schemas/UserSchema.js";
 import { userInfo } from "node:os";
+import { MAX_HAPPINESS } from "../config/constants/contants.js";
 
 async function addBagItemOwnership(
   itemId: mongoose.Types.ObjectId,
@@ -168,10 +169,15 @@ async function useTreat(itemId: string, userId: string, qty: number) {
     }
 
     if (bagItem?.happiness) {
+      let happinessToAdd = userSchema.happiness + bagItem.happiness;
+      if (happinessToAdd > MAX_HAPPINESS) {
+        happinessToAdd = MAX_HAPPINESS;
+      }
+
       const updatedUserSchema = await UserSchema.findByIdAndUpdate(
         userSchema._id,
         {
-          happiness: userSchema.happiness + bagItem.happiness,
+          happiness: happinessToAdd,
         },
       );
 
@@ -290,7 +296,9 @@ async function unequipBagItem(userId: string, itemId: string) {
     const userObjId = new mongoose.Types.ObjectId(userId);
 
     // Fetch the document to identify which slot currently holds the item
-    const equippedItems = await EquippedItemsSchema.findOne({ userId: userObjId });
+    const equippedItems = await EquippedItemsSchema.findOne({
+      userId: userObjId,
+    });
 
     if (!equippedItems) {
       return null;
